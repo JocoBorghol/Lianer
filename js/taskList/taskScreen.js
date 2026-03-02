@@ -7,8 +7,9 @@ import { formatTaskTime } from "../data/tasks.js";
 import { getWelcomeHTML, attachWelcomeEvents } from "../comps/welcomeOverlay.js";
 
 // ─── Date helper ───
-function startOfWeekMonday() {
-  const d = new Date();
+// Uppdaterad: Tar nu emot ett datum som bas för måndagen
+function startOfWeekMonday(baseDate = new Date()) {
+  const d = new Date(baseDate);
   const day = d.getDay() || 7; // Sun=0 → 7
   d.setDate(d.getDate() - day + 1);
   d.setHours(0, 0, 0, 0);
@@ -23,13 +24,14 @@ function toDateStr(d) {
 }
 
 /** Renders the week-view: 7 day columns */
-function renderWeekView(tasks) {
+// Uppdaterad: Använder viewDate för att visa rätt vecka
+function renderWeekView(tasks, viewDate) {
   const grid = document.createElement("div");
   grid.className = "week-view-grid";
   grid.setAttribute("role", "region");
   grid.setAttribute("aria-label", "Veckovy");
 
-  const monday = startOfWeekMonday();
+  const monday = startOfWeekMonday(viewDate);
   const today = toDateStr(new Date());
 
   for (let i = 0; i < 7; i++) {
@@ -78,21 +80,22 @@ function renderWeekView(tasks) {
   return grid;
 }
 
-/** Renders the day-view: 24h axis for today */
-function renderDayView(tasks) {
+/** Renders the day-view: 24h axis for a specific date */
+// Uppdaterad: Använder viewDate för planeringen
+function renderDayView(tasks, viewDate) {
   const wrapper = document.createElement("div");
 
   wrapper.className = "day-view-wrapper";
   wrapper.setAttribute("role", "region");
   wrapper.setAttribute("aria-label", "Dagsvy");
 
-  const todayDate = new Date();
   const heading = document.createElement("h3");
   heading.className = "day-view-heading";
-  heading.textContent = `Dagsplanering – ${todayDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}`;
+  heading.textContent = `Dagsplanering – ${viewDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}`;
   wrapper.append(heading);
 
-  const activeTasks = tasks.filter(t => t.status !== TASK_STATUSES.CLOSED);
+  const viewDateStr = toDateStr(viewDate);
+  const activeTasks = tasks.filter(t => t.status !== TASK_STATUSES.CLOSED && t.deadline === viewDateStr);
   const allDayTasks = activeTasks.filter(t => !t.taskTime);
   // Sort timed tasks by start time
   const timedTasks = activeTasks.filter(t => t.taskTime).sort((a, b) => {
@@ -160,18 +163,13 @@ function renderDayView(tasks) {
 /**
  * @file taskScreen.js
  * @description Hanterar huvudskärmen för uppgifter (Kanban-vyn).
- * Inkluderar filter för team/medlemmar och stöd för flera ansvariga per uppgift.
  */
 
-/**
- * Skapar och returnerar huvudvyn för uppgiftshantering.
- * @returns {HTMLElement} Det sammansatta elementet för uppgiftsskärmen.
- */
-export const taskScreen = ({ taskService, navigate }) => {
+// Uppdaterad: Tar nu emot currentDate och onNavigateDate från ViewController
+export const taskScreen = ({ taskService, navigate, currentDate, onNavigateDate }) => {
   const state = loadState();
-  const people = state.people || []; // Array med strängar (namn)
+  const people = state.people || [];
 
-  // Hämtar senast använda filter eller sätter standard till "Team"
   let currentFilter = localStorage.getItem("taskViewFilter") || "Team";
   let currentViewMode = localStorage.getItem("taskViewMode") || "board";
 
@@ -181,6 +179,31 @@ export const taskScreen = ({ taskService, navigate }) => {
 
   const contentArea = document.createElement("div");
   contentArea.classList.add("taskContentArea");
+
+  // ---------- NAVIGERINGSKONTROLLER (PILAR) ----------
+  const navContainer = document.createElement("div");
+  navContainer.className = "task-view-nav-strip";
+
+  const prevBtn = document.createElement("button");
+  prevBtn.className = "task-nav-btn";
+  prevBtn.innerHTML = "◀";
+  prevBtn.onclick = () => {
+    const steps = (currentViewMode === "week") ? -7 : -1;
+    onNavigateDate(steps);
+  };
+
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "task-nav-btn";
+  nextBtn.innerHTML = "▶";
+  nextBtn.onclick = () => {
+    const steps = (currentViewMode === "week") ? 7 : 1;
+    onNavigateDate(steps);
+  };
+
+  const dateLabel = document.createElement("span");
+  dateLabel.className = "task-nav-date-label";
+
+  navContainer.append(prevBtn, dateLabel, nextBtn);
 
   // ---------- VIEW MODE TOGGLE ----------
   const viewToggleBar = document.createElement("div");
@@ -208,7 +231,7 @@ export const taskScreen = ({ taskService, navigate }) => {
     viewToggleBar.append(btn);
   });
 
-  // ---------- FILTERKONTROLLER (Semantisk Header) ----------
+  // ---------- FILTERKONTROLLER ----------
   const filterHeader = document.createElement("header");
   filterHeader.classList.add("taskFilterContainer");
 
@@ -222,7 +245,6 @@ export const taskScreen = ({ taskService, navigate }) => {
   select.classList.add("taskFilterSelect");
   select.setAttribute("aria-controls", "task-board");
 
-  // 1. Hela teamet
   const teamOption = document.createElement("option");
   teamOption.value = "Team";
   teamOption.textContent = "Hela Teamet";
@@ -234,13 +256,10 @@ export const taskScreen = ({ taskService, navigate }) => {
   teamSeparator.textContent = "────────────────";
   select.append(teamSeparator);
 
-  // 2. Alla medlemmar (Hanterar datan som strängar nu!)
   people.forEach(personName => {
     const option = document.createElement("option");
     option.value = personName; 
-    // Om personen är "Ingen", visa det snyggare i listan
     option.textContent = (personName === "Ingen") ? "🟢 Lediga uppgifter" : personName;
-    
     if (personName === currentFilter) option.selected = true;
     select.append(option);
   });
@@ -250,54 +269,50 @@ export const taskScreen = ({ taskService, navigate }) => {
   archiveSeparator.textContent = "────────────────";
   select.append(archiveSeparator);
 
-  // 3. Arkivet
   const archiveOption = document.createElement("option");
   archiveOption.value = "Arkiv";
   archiveOption.textContent = "📁 Visa Stängda Uppgifter";
   if (currentFilter === "Arkiv") archiveOption.selected = true;
   select.append(archiveOption);
 
-  /**
-   * Uppdaterar Kanban-tavlan baserat på valt filter.
-   * @param {string} selectedFilter - Namnet på personen, "Team" eller "Arkiv".
-   */
   const updateView = (selectedFilter) => {
     contentArea.innerHTML = ""; 
 
     const tasks  = taskService.getTasks();
 
-    // ═══════════════════════════════════════════════════════════════
-    // EMPTY STATE – "Lianer Welcome Hero" (High-End Edition)
-    // Visas om det inte finns NÅGRA uppgifter alls i systemet.
-    // ═══════════════════════════════════════════════════════════════
+    // Uppdatera datumlabeln i nav-strippen
+    if (currentViewMode === "week") {
+      const mon = startOfWeekMonday(currentDate);
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      dateLabel.textContent = `V. ${getWeekNumber(currentDate)} (${mon.getDate()}/${mon.getMonth()+1} - ${sun.getDate()}/${sun.getMonth()+1})`;
+      navContainer.style.display = "flex";
+    } else if (currentViewMode === "day") {
+      dateLabel.textContent = currentDate.toLocaleDateString("sv-SE", { day: "numeric", month: "long" });
+      navContainer.style.display = "flex";
+    } else {
+      navContainer.style.display = "none";
+    }
+
     if (tasks.length === 0 && selectedFilter !== "Arkiv") {
-      // Hide the filter bar (view toggle is inside it)
       filterHeader.style.display = "none";
-
-
       const emptyState = document.createElement("div");
       emptyState.className = "empty-state-container";
       emptyState.setAttribute("role", "region");
       emptyState.setAttribute("aria-label", "Välkommen till Lianer");
-
       emptyState.innerHTML = getWelcomeHTML(false);
-
       attachWelcomeEvents(emptyState, taskService, null);
-
       contentArea.append(emptyState);
       return;
     }
 
-    // Show the filter bar (includes view toggle)
     filterHeader.style.display = "";
-
 
     // ── Week View ──
     if (currentViewMode === "week" && selectedFilter !== "Arkiv") {
       const filteredTasks = selectedFilter === "Team"
         ? tasks
         : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
-      contentArea.append(renderWeekView(filteredTasks));
+      contentArea.append(renderWeekView(filteredTasks, currentDate));
       return;
     }
 
@@ -306,7 +321,7 @@ export const taskScreen = ({ taskService, navigate }) => {
       const filteredTasks = selectedFilter === "Team"
         ? tasks
         : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
-      contentArea.append(renderDayView(filteredTasks));
+      contentArea.append(renderDayView(filteredTasks, currentDate));
       return;
     }
 
@@ -316,11 +331,11 @@ export const taskScreen = ({ taskService, navigate }) => {
     board.setAttribute("role", "region");
     board.setAttribute("aria-live", "polite");
 
-    // LOGIK FÖR ARKIV-VY (VG: Focus Management)
     if (selectedFilter === "Arkiv") {
       const archiveColumn = document.createElement("section");
       archiveColumn.className = "taskWrapper closed-tasks-archive";
       archiveColumn.setAttribute("aria-label", "Stängda uppgifter");
+      archiveColumn.setAttribute("data-status", "Stängd");
       
       const closedTasks = tasks.filter(t => t.status === TASK_STATUSES.CLOSED);
       archiveColumn.append(taskList(TASK_STATUSES.CLOSED, closedTasks, {
@@ -330,23 +345,16 @@ export const taskScreen = ({ taskService, navigate }) => {
           if (taskService.updateTaskOrder) {
             taskService.updateTaskOrder(taskId, newStatus, prevOrderId, nextOrderId);
             window.dispatchEvent(new CustomEvent('renderApp'));
-          } else {
-            console.warn("updateTaskOrder missing in TaskService");
           }
         }
       }));
-      
       board.append(archiveColumn);
     } 
-    // LOGIK FÖR KANBAN-VY (Hanterar array-logik för flera ansvariga som strängar)
     else {
-      // Filtrerar uppgifter: Visa alla om "Team", annars kolla om personens namn finns i assignedTo-arrayen
       const filteredTasks = selectedFilter === "Team" 
         ? tasks 
         : tasks.filter(t => {
-            // Kontrollera först i den nya arrayen, fallback till gamla 'assigned'
             if (t.assignedTo && Array.isArray(t.assignedTo)) {
-              // Buggfix: 'Ledig' = tom array ELLER explicit "Ingen"
               if (selectedFilter === "Ingen") {
                 return t.assignedTo.length === 0 || t.assignedTo.includes("Ingen");
               }
@@ -360,7 +368,7 @@ export const taskScreen = ({ taskService, navigate }) => {
       activeStatuses.forEach(status => {
         const columnWrapper = document.createElement("section");
         columnWrapper.classList.add("taskWrapper");
-        columnWrapper.setAttribute("data-status", status);
+        columnWrapper.setAttribute("data-status", status); // VIKTIGT för glow
         columnWrapper.setAttribute("aria-label", `Kolumn: ${status}`);
 
         const columnTasks = filteredTasks
@@ -369,7 +377,7 @@ export const taskScreen = ({ taskService, navigate }) => {
           
         columnWrapper.append(taskList(status, columnTasks, {
           taskService,
-          navigate,    // Skickar navigate funktion till listItems 
+          navigate,
           onMoveTask: (id,dir) => {
             taskService.moveTask(id,dir);
             window.dispatchEvent(new CustomEvent('renderApp'));
@@ -387,8 +395,6 @@ export const taskScreen = ({ taskService, navigate }) => {
             if (taskService.updateTaskOrder) {
               taskService.updateTaskOrder(taskId, newStatus, prevOrderId, nextOrderId);
               window.dispatchEvent(new CustomEvent('renderApp'));
-            } else {
-              console.warn("updateTaskOrder missing in TaskService");
             }
           }
         }));
@@ -399,21 +405,25 @@ export const taskScreen = ({ taskService, navigate }) => {
     contentArea.append(board);
   };
 
-  // Eventlyssnare för filterändring
   select.addEventListener("change", (e) => {
-    const newFilter = e.target.value;
-    localStorage.setItem("taskViewFilter", newFilter);
-    updateView(newFilter);
+    currentFilter = e.target.value;
+    localStorage.setItem("taskViewFilter", currentFilter);
+    updateView(currentFilter);
   });
 
-  // Initial rendering
   updateView(currentFilter);
 
-  // Merge filter + view toggle into one header strip
-  filterHeader.append(filterLabel, select, viewToggleBar);
+  // Nav-strippen läggs till mellan select och viewToggle
+  filterHeader.append(filterLabel, select, navContainer, viewToggleBar);
   screenWrapper.append(filterHeader, contentArea);
-
-
 
   return screenWrapper;
 };
+
+// Hjälpfunktion för veckonummer
+function getWeekNumber(d) {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}

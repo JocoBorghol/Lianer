@@ -1990,10 +1990,54 @@ body.menu-is-collapsed .taskFilterContainer {
     .modal-fields-row { grid-template-columns: 1fr; }
 }
 
-/* taskFilterContainer – flex row so label+select+view-toggle appear inline */
+/* Container för pilarna och datumet */
+.task-view-nav-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05); /* Subtil glas-effekt */
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    height: 42px; /* Samma höjd som dropdownen för symmetri */
+}
+
+/* Stil för pil-knapparna */
+.task-nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent-cyan);
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.task-nav-btn:hover {
+    background: rgba(34, 211, 238, 0.1);
+    transform: scale(1.1);
+}
+
+/* Datumtexten (V. 10...) */
+.task-nav-date-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-main);
+    padding: 0 10px;
+    white-space: nowrap;
+}
+
+/* Justering av huvud-containern för att hålla allt på en rad */
 .taskFilterContainer {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
+    justify-content: space-between; /* Sprider ut dropdown, pilar och vy-knappar */
+    gap: 15px;
+    padding: 12px 20px;
 }

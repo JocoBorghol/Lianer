@@ -10,6 +10,14 @@ export class ViewController {
     this.service = service;
     this.activeView = "dashboard";
     this.params = null; 
+    // Nytt: Håll koll på navigationsdatumet för Vecko- och Dagsvy
+    this.currentDate = new Date(); 
+  }
+
+  // Ny metod: Hanterar bläddring mellan dagar/veckor
+  stepDate(days) {
+    this.currentDate.setDate(this.currentDate.getDate() + days);
+    this.render();
   }
 
   setView(view, params = null) {
@@ -46,6 +54,10 @@ export class ViewController {
       this.container.append(
         taskScreen({
           taskService: this.service,
+          // Skicka med currentDate så att Vecka/Dag-vyn vet vad den ska visa
+          currentDate: this.currentDate, 
+          // Skicka med stepDate så att knapparna i Task-headern kan anropa den
+          onNavigateDate: (days) => this.stepDate(days),
           navigate: (view, params) => this.setView(view, params)
         })
       );
