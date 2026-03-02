@@ -4,7 +4,6 @@ import { StateStore } from "../js/data/StateStore.js";
 describe("StateStore", () => {
 
   let store;
-  let memory;
 
   const tasks = [
     { id: "1", title: "Leta kontakter" },

@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 
 let initSeed, loadDemoWorkspace, loadDemoLIA;
 let loadState, saveState;
-let initContactsDB, importContacts, getAllContacts;
+let initContactsDB, importContacts;
 let createTask;
 
 describe("seed data utilities", () => {
@@ -39,7 +39,6 @@ describe("seed data utilities", () => {
         saveState = mockStorage.saveState;
         initContactsDB = mockContactsDb.initContactsDB;
         importContacts = mockContactsDb.importContacts;
-        getAllContacts = mockContactsDb.getAllContacts;
         createTask = mockTasks.createTask;
     });
 
