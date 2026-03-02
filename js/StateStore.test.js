@@ -4,7 +4,6 @@ import { StateStore } from "../js/data/StateStore.js";
 describe("StateStore", () => {
 
   let store;
-  let memory;
 
   const tasks = [
     { id: "1", title: "Leta kontakter" },
@@ -20,6 +19,16 @@ describe("StateStore", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
+
+  test("load returns [] if storage contains empty string", () =>
+  {
+      localStorage.setItem("state", "");
+
+      const state = store.load();
+
+      expect(state).toEqual([]);
+  })
 
   test("load should return empty array if storage is empty", () => {
     const state = store.load();

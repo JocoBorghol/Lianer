@@ -1,10 +1,24 @@
 import { listItem } from "./listItem.js";
-
 /**
  * @file taskList.js
  * @description Renderar en enskild kolumn (statusgrupp) i Kanban-tavlan.
  * Hanterar expandering/kollaps med persistens och tillgänglighetsstöd.
  */
+
+// Helper: Hitta vilket element man drar uppgiften över
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.listItem:not(.dragging)')];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
 
 /**
  * Skapar en uppgiftslista för en specifik status.
@@ -12,8 +26,9 @@ import { listItem } from "./listItem.js";
  * @param {Array<Object>} tasks - Lista över uppgifter som tillhör denna status.
  * @returns {HTMLElement} Kolumnelementet.
  */
-export const taskList = (status, tasks) => {
+export const taskList = (status, tasks, deps = {}) => {
   const container = document.createElement("div");
+  const actions = createListActions(deps);
 
   // Hämta sparat läge för att bibehålla användarens vy vid omladdning
   const storageKey = `column_state_${status}`;
@@ -67,6 +82,8 @@ export const taskList = (status, tasks) => {
   listItemsContainer.style.display = shouldBeExpanded ? "flex" : "none";
   listItemsContainer.style.flexDirection = "column";
   listItemsContainer.style.gap = "16px";
+  // Behövs för att göra det the dropzone
+  listItemsContainer.style.minHeight = "50px";
 
   // Arkiv-beskrivning (VG: Inkluderande beskrivning)
   if (status === "Stängd") {
@@ -100,7 +117,7 @@ export const taskList = (status, tasks) => {
 
     const description = container.querySelector(".archive-description");
     if (description) {
-      description.style.display = isCollapsed ? "none" : "block";
+      description.style.display = isCollapsed ? "none" : "block"; //101
     }
   };
 
@@ -113,9 +130,74 @@ export const taskList = (status, tasks) => {
   } else {
     tasks.forEach(task => {
       // Skickar vidare uppgiften till listItem som nu hanterar flera avatarer
-      listItemsContainer.append(listItem(task));
+      listItemsContainer.append(listItem(task, actions));
     });
   }
 
+  // --- HTML5 DRAG AND DROP EVENTS ---
+  listItemsContainer.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    listItemsContainer.classList.add("drag-over");
+    
+    // Ta bort "Inga uppgifter" om vi drar över det
+    const emptyState = listItemsContainer.querySelector(".emptyState");
+    if (emptyState) emptyState.remove();
+
+    const afterElement = getDragAfterElement(listItemsContainer, e.clientY);
+    const draggingElement = document.querySelector(".dragging");
+    if (draggingElement) {
+      if (afterElement == null) {
+        listItemsContainer.appendChild(draggingElement);
+      } else {
+        listItemsContainer.insertBefore(draggingElement, afterElement);
+      }
+    }
+  });
+
+  listItemsContainer.addEventListener("dragleave", (e) => {
+    // Only remove drag-over class if leaving the actual container (not entering a child card)
+    if (!listItemsContainer.contains(e.relatedTarget)) {
+      listItemsContainer.classList.remove("drag-over");
+    }
+  });
+
+  listItemsContainer.addEventListener("drop", (e) => {
+    e.preventDefault();
+    listItemsContainer.classList.remove("drag-over");
+    
+    const taskId = e.dataTransfer.getData("text/plain");
+    if (!taskId) return;
+
+    // Hitta var kortet släpptes
+    const afterElement = getDragAfterElement(listItemsContainer, e.clientY);
+    const nextTaskId = afterElement ? afterElement.getAttribute("data-task-id") : null;
+    
+    let prevTaskId = null;
+    if (afterElement) {
+        const prevElement = afterElement.previousElementSibling;
+        if (prevElement && prevElement.hasAttribute('data-task-id') && !prevElement.classList.contains("dragging")) {
+            prevTaskId = prevElement.getAttribute("data-task-id");
+        }
+    } else {
+        const allItems = [...listItemsContainer.querySelectorAll('.listItem:not(.dragging)')];
+        if (allItems.length > 0) {
+            prevTaskId = allItems[allItems.length - 1].getAttribute("data-task-id");
+        }
+    }
+
+    if (deps.onDropTask) {
+        deps.onDropTask(taskId, status, prevTaskId, nextTaskId);
+    }
+  });
+
   return container;
 };
+
+const createListActions = (deps) => ({
+  onNavigate: deps.navigate,
+  onEditTask: (task) => deps.onEditTask?.(task),
+  onMoveTask: (id, direction) => deps.onMoveTask?.(id, direction),
+  onChangeStatus: (id, newStatus) => deps.onChangeStatus?.(id, newStatus),
+  onDeleteTask: (task) => deps.onDeleteTask?.(task),
+});

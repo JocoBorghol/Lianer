@@ -1,0 +1,161 @@
+"ID","Team","Title","Description","Status","Estimate","Priority","Project ID","Project","Creator","Assignee","Labels","Cycle Number","Cycle Name","Cycle Start","Cycle End","Created","Updated","Started","Triaged","Completed","Canceled","Archived","Due Date","Parent issue","Initiatives","Project Milestone ID","Project Milestone","SLA Status","UUID","Time in status (minutes)","Related to","Blocked by","Duplicate of"
+"K3-5","K3 - Projekt i team","CI/CD pipeline setup",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 08:46:08 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:39 GMT+0000 (GMT)",,,"Thu Feb 05 2026 08:49:02 GMT+0000 (GMT)",,,,,"",,,,"1d555a28-b9a3-4cfe-9b9a-1e8fad2bd262",19797,,,
+"K3-6","K3 - Projekt i team","Sätta upp Github Pages",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 08:46:53 GMT+0000 (GMT)","Fri Feb 06 2026 19:09:39 GMT+0000 (GMT)",,,"Fri Feb 06 2026 19:09:39 GMT+0000 (GMT)",,,,,"",,,,"79d1bd5a-b277-4f1e-b9cd-40cba1694428",17736,,,
+"K3-7","K3 - Projekt i team","Skapa repo, bjud in varandra samt justera repo inställningar",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 08:47:28 GMT+0000 (GMT)","Fri Feb 06 2026 23:33:03 GMT+0000 (GMT)",,,"Fri Feb 06 2026 23:33:03 GMT+0000 (GMT)",,,,,"",,,,"b5b86f99-0606-44f1-8411-afebf190ace0",17473,,,
+"K3-8","K3 - Projekt i team","Bygga grundstruktur av JS -> HTML",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 08:47:39 GMT+0000 (GMT)","Tue Feb 17 2026 11:08:57 GMT+0000 (GMT)",,,"Tue Feb 17 2026 11:08:57 GMT+0000 (GMT)",,,,,"",,,,"b052b1b2-da49-4a6f-8268-73499a7da059",2377,,,
+"K3-17","K3 - Projekt i team","Som team vill vi kunna skapa, redigera och ta bort uppgifter.",,"Done",,"No priority",,,"joco.borghol@gmail.com","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:09:50 GMT+0000 (GMT)","Tue Feb 17 2026 11:09:03 GMT+0000 (GMT)",,,"Tue Feb 17 2026 11:09:03 GMT+0000 (GMT)",,,,,"",,,,"c0eb1b22-1c1f-4666-81b9-73facc1dd7b7",2377,,,
+"K3-18","K3 - Projekt i team","Som team vill vi kunna lägga till, redigera och ta bort teammedlemmar så att alla som deltar finns med.",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:10:26 GMT+0000 (GMT)","Thu Feb 12 2026 08:22:49 GMT+0000 (GMT)","Tue Feb 10 2026 10:47:44 GMT+0000 (GMT)",,"Thu Feb 12 2026 08:22:49 GMT+0000 (GMT)",,,,,"",,,,"987c4004-cfc5-4fb4-95fc-311224514f8b",9743,,,
+"K3-19","K3 - Projekt i team","Som team vill vi kunna tilldela uppgifter, aktiviteter och möten gemensamt så att ansvar är tydligt utan hierarki.",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:10:30 GMT+0000 (GMT)","Thu Feb 12 2026 08:23:01 GMT+0000 (GMT)","Tue Feb 10 2026 10:47:38 GMT+0000 (GMT)",,"Thu Feb 12 2026 08:23:01 GMT+0000 (GMT)",,,,,"",,,,"ddeeab49-2eb2-44e2-811a-9063138fbf7f",9743,,,
+"K3-20","K3 - Projekt i team","Som team vill vi kunna uppdatera status på uppgifter (todo, in progress, done) så att alla ser hur arbetet fortskrider.",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:10:34 GMT+0000 (GMT)","Fri Feb 06 2026 19:09:45 GMT+0000 (GMT)",,,"Fri Feb 06 2026 19:09:45 GMT+0000 (GMT)",,,,,"",,,,"2197a726-f90e-43b2-a107-a0f5c6c798f9",17736,,,
+"K3-21","K3 - Projekt i team","Som team vill vi att nya uppgifter automatiskt får en standarddeadline så att planering sker konsekvent.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:10:40 GMT+0000 (GMT)","Thu Feb 05 2026 09:10:40 GMT+0000 (GMT)",,,,,,,,"",,,,"7f307409-06f2-4ed8-afbd-b200acdafb03",19775,,,
+"K3-22","K3 - Projekt i team","Som team vill vi kunna markera vilka uppgifter vi är intresserade av att arbeta med så att alla preferenser är synliga för gruppen.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:10:48 GMT+0000 (GMT)","Thu Feb 05 2026 09:10:48 GMT+0000 (GMT)",,,,,,,,"",,,,"a9854f12-d1bc-4f4a-965c-54f758c5fe27",19775,,,
+"K3-23","K3 - Projekt i team","Som team vill vi kunna rangordna uppgifter med en siffra baserat på hur gärna vi vill ta dem så att fördelningen blir rättvis.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:10:52 GMT+0000 (GMT)","Thu Feb 05 2026 09:10:52 GMT+0000 (GMT)",,,,,,,,"",,,,"933e48da-1015-4aea-93fa-317c5fed5ac9",19775,,,
+"K3-24","K3 - Projekt i team","Som team vill vi ha en gemensam valfas där alla måste göra minst ett val innan uppgifter fördelas så att processen blir transparent.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:10:58 GMT+0000 (GMT)","Thu Feb 05 2026 09:10:58 GMT+0000 (GMT)",,,,,,,,"",,,,"70847e41-0c1e-4dd2-b901-9f94a1707acb",19775,,,
+"K3-25","K3 - Projekt i team","Som team vill vi att systemet automatiskt fördelar uppgifter baserat på allas rangordning så att ansvar uppstår utan att någon tilldelar uppgifter manuellt.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:11:01 GMT+0000 (GMT)","Fri Feb 06 2026 23:31:28 GMT+0000 (GMT)",,,,,,,,"",,,,"e60aecbd-6885-45bd-9f5f-3c80a74bb768",19775,,,
+"K3-26","K3 - Projekt i team","Som team vill vi att systemet hanterar situationer där flera valt samma uppgift så att varje person ändå får en uppgift.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:11:06 GMT+0000 (GMT)","Thu Feb 05 2026 09:11:06 GMT+0000 (GMT)",,,,,,,,"",,,,"c8b31eef-16a0-400a-bc99-9cbf1b269079",19775,,,
+"K3-27","K3 - Projekt i team","Som team vill vi kunna välja om denna fördelningsfunktion ska användas eller inte så att arbetssättet kan anpassas efter behov.",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 05 2026 09:11:09 GMT+0000 (GMT)","Thu Feb 05 2026 09:11:10 GMT+0000 (GMT)",,,,,,,,"",,,,"8dab224a-0022-40e7-b089-f26314d39946",19775,,,
+"K3-28","K3 - Projekt i team","skapa er-diagram",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:19:58 GMT+0000 (GMT)","Tue Feb 17 2026 11:07:50 GMT+0000 (GMT)",,,"Tue Feb 17 2026 11:07:50 GMT+0000 (GMT)",,,,"K3-17","",,,,"90dde42f-6eca-4cae-be85-dd7aea34e764",2378,,,
+"K3-29","K3 - Projekt i team","skapa datamodeller enligt er-diagram",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:20:11 GMT+0000 (GMT)","Tue Feb 17 2026 11:07:47 GMT+0000 (GMT)",,,"Tue Feb 17 2026 11:07:47 GMT+0000 (GMT)",,,,"K3-17","",,,,"40ecab2d-900e-4f28-9c50-d1f7a3718f63",2378,,,
+"K3-30","K3 - Projekt i team","skapa funktion för att skapa data",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:20:28 GMT+0000 (GMT)","Thu Feb 12 2026 09:20:57 GMT+0000 (GMT)","Fri Feb 06 2026 10:01:42 GMT+0000 (GMT)",,"Thu Feb 12 2026 09:20:57 GMT+0000 (GMT)",,,,"K3-17","",,,,"80a59207-792d-43a9-b6c6-0effcb08614f",9685,,,
+"K3-31","K3 - Projekt i team","skapa funktion för att redigera/ta bort data",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:21:04 GMT+0000 (GMT)","Tue Feb 17 2026 11:09:06 GMT+0000 (GMT)","Fri Feb 06 2026 10:01:47 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:09:06 GMT+0000 (GMT)",,,,"K3-17","",,,,"33c2cc48-c4a9-453f-b061-921944feedfd",2377,,,
+"K3-32","K3 - Projekt i team","skapa användarvänlig och intuitiv UI för CRUD på uppgifterna",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:22:18 GMT+0000 (GMT)","Fri Feb 06 2026 10:01:29 GMT+0000 (GMT)",,,"Fri Feb 06 2026 10:01:29 GMT+0000 (GMT)",,,,"K3-17","",,,,"e1dd173e-c9db-4b8b-b48c-a61afaa9a28b",18284,,,
+"K3-33","K3 - Projekt i team","Unit tests – skapa uppgift",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:23:00 GMT+0000 (GMT)","Thu Feb 12 2026 09:20:44 GMT+0000 (GMT)","Fri Feb 06 2026 10:02:12 GMT+0000 (GMT)",,"Thu Feb 12 2026 09:20:44 GMT+0000 (GMT)",,,,"K3-17","",,,,"af9dd0dc-d738-477d-ba49-b43ca07422b0",9685,,,
+"K3-34","K3 - Projekt i team","Unit tests – redigera uppgift",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:23:04 GMT+0000 (GMT)","Tue Feb 17 2026 11:09:06 GMT+0000 (GMT)","Fri Feb 06 2026 10:02:05 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:09:06 GMT+0000 (GMT)",,,,"K3-17","",,,,"b130e56f-ae29-4d34-9663-a121208cd99d",2377,,,
+"K3-35","K3 - Projekt i team","Unit tests – ta bort uppgift",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 05 2026 09:23:09 GMT+0000 (GMT)","Tue Feb 17 2026 11:07:43 GMT+0000 (GMT)",,,"Tue Feb 17 2026 11:07:43 GMT+0000 (GMT)",,,,"K3-17","",,,,"f44ddba0-96dd-49e3-a814-34d06686a10a",2378,,,
+"K3-36","K3 - Projekt i team","Definiera tillåtna statusvärden","Exempel: skapa ENUM (todo, in_progress,done)","Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:46:25 GMT+0000 (GMT)","Thu Feb 05 2026 13:13:25 GMT+0000 (GMT)",,,"Thu Feb 05 2026 12:21:47 GMT+0000 (GMT)",,,,"K3-20","",,,,"761d9ef6-504e-428e-9793-5ab22be6ed76",19574,,,
+"K3-37","K3 - Projekt i team","Implementera uppdatera-status-funktion","Man ska kunna ändra status på en uppgift och det ska förbli ändrat i local storage","Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:46:48 GMT+0000 (GMT)","Thu Feb 05 2026 13:27:31 GMT+0000 (GMT)","Thu Feb 05 2026 13:13:46 GMT+0000 (GMT)",,"Thu Feb 05 2026 13:27:31 GMT+0000 (GMT)",,,,"K3-20","",,,,"da1b1c45-96ef-405a-90d5-10659b426383",19518,,,
+"K3-38","K3 - Projekt i team","Filtrera eller gruppera uppgifter efter status",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:49:00 GMT+0000 (GMT)","Fri Feb 06 2026 19:09:33 GMT+0000 (GMT)",,,"Fri Feb 06 2026 19:09:33 GMT+0000 (GMT)",,,,"K3-20","",,,,"e45cbd07-0818-4ad3-bec5-f6e3cdc3b77a",17736,,,
+"K3-39","K3 - Projekt i team","Skapa UI som visar nurvarande status",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:49:37 GMT+0000 (GMT)","Fri Feb 06 2026 11:26:38 GMT+0000 (GMT)","Thu Feb 05 2026 13:31:39 GMT+0000 (GMT)",,"Fri Feb 06 2026 11:26:38 GMT+0000 (GMT)",,,,"K3-20","",,,,"994aec3f-7c1c-4881-bbb6-a6162e171c96",18199,,,
+"K3-40","K3 - Projekt i team","Skapa UI som låter användaren ändra status",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:49:53 GMT+0000 (GMT)","Fri Feb 06 2026 16:36:33 GMT+0000 (GMT)",,,"Fri Feb 06 2026 16:36:33 GMT+0000 (GMT)",,,,"K3-20","",,,,"919f3e8e-84aa-4307-b44c-81d6ce9d71fd",17889,,,
+"K3-41","K3 - Projekt i team","Unit tests – statusvalidering","* Tillåtna statusar
+* Förhindra ogiltiga värden","Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:50:18 GMT+0000 (GMT)","Thu Feb 05 2026 13:10:59 GMT+0000 (GMT)",,,"Thu Feb 05 2026 13:10:59 GMT+0000 (GMT)",,,,"K3-36","",,,,"010d2b96-43e7-4b62-a5c1-4eec7bb599a9",19535,,,
+"K3-42","K3 - Projekt i team","Unit tests – uppdatera status","* Korrekt statusändring
+* Försök uppdatera task som inte finns","Done",,"No priority",,,"alexander.jansson@chasacademy.se","joco.borghol@gmail.com","",,,,,"Thu Feb 05 2026 09:50:40 GMT+0000 (GMT)","Fri Feb 06 2026 19:09:27 GMT+0000 (GMT)",,,"Fri Feb 06 2026 19:09:27 GMT+0000 (GMT)",,,,"K3-20","",,,,"633f942d-e25e-4ba2-8d8d-41f172ca4666",17737,,,
+"K3-43","K3 - Projekt i team","Skapa central people-state i storage",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:34:21 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:34 GMT+0000 (GMT)","Tue Feb 10 2026 10:39:45 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:34 GMT+0000 (GMT)",,,,"K3-18","",,,,"36b12276-8a25-4275-981e-e57443adc7bd",11960,,,
+"K3-44","K3 - Projekt i team","Lägga till ny person via UI",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:34:44 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:27 GMT+0000 (GMT)","Tue Feb 10 2026 10:39:40 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:27 GMT+0000 (GMT)",,,,"K3-18","",,,,"781a4ac2-458d-4975-8bf5-4b9471a42a8c",11961,,,
+"K3-45","K3 - Projekt i team","Redigera namn på befintlig person",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:34:57 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:25 GMT+0000 (GMT)","Tue Feb 10 2026 10:39:33 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:25 GMT+0000 (GMT)",,,,"K3-18","",,,,"38d955c9-6b2e-44d4-95e0-071a96db4200",11961,,,
+"K3-46","K3 - Projekt i team","Tilldela uppgift till person via dropdown",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:35:24 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:22 GMT+0000 (GMT)","Tue Feb 10 2026 10:40:07 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:22 GMT+0000 (GMT)",,,,"K3-19","",,,,"e9766adc-2c1f-4639-aa91-1d35e771b5be",11961,,,
+"K3-47","K3 - Projekt i team","Visa ansvar per uppgift i UI",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:35:32 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:21 GMT+0000 (GMT)","Tue Feb 10 2026 10:40:12 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:21 GMT+0000 (GMT)",,,,"K3-19","",,,,"ef3f6d4d-e8a5-41ac-ba6c-687967a94c6e",11961,,,
+"K3-48","K3 - Projekt i team","Uppdatera tilldelning i realtid",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:35:40 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:20 GMT+0000 (GMT)","Tue Feb 10 2026 10:40:25 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:19 GMT+0000 (GMT)",,,,"K3-19","",,,,"2c476109-07e4-48b5-8fcb-a770c753dea4",11961,,,
+"K3-49","K3 - Projekt i team","Behålla tilldelning per status",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:35:48 GMT+0000 (GMT)","Tue Feb 10 2026 19:25:24 GMT+0000 (GMT)","Tue Feb 10 2026 10:40:18 GMT+0000 (GMT)",,"Tue Feb 10 2026 19:25:24 GMT+0000 (GMT)",,,,"K3-19","",,,,"2a7383ce-d710-4215-b5a6-3db45130a5f9",11961,,,
+"K3-50","K3 - Projekt i team","Som team vill vi ha en gemensam dashboard som visar uppgifter, status och ansvar per person och för hela gruppen, så att inget arbete blir osynligt.",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:52:51 GMT+0000 (GMT)","Thu Feb 12 2026 13:44:01 GMT+0000 (GMT)","Tue Feb 10 2026 19:27:05 GMT+0000 (GMT)",,"Thu Feb 12 2026 13:44:01 GMT+0000 (GMT)",,,,,"",,,,"ce428407-13a4-4444-89a6-c307e77a42be",9422,,,
+"K3-51","K3 - Projekt i team","Visa alla uppgifter grupperade per status",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:53:10 GMT+0000 (GMT)","Thu Feb 12 2026 07:46:20 GMT+0000 (GMT)","Tue Feb 10 2026 19:26:28 GMT+0000 (GMT)",,"Thu Feb 12 2026 07:46:20 GMT+0000 (GMT)",,,,"K3-50","",,,,"513f2aa1-d15c-46ca-8b6a-345151d88ed4",9780,,,
+"K3-52","K3 - Projekt i team","Visa antal uppgifter per status/person",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:53:30 GMT+0000 (GMT)","Thu Feb 12 2026 13:44:05 GMT+0000 (GMT)","Tue Feb 10 2026 19:26:28 GMT+0000 (GMT)",,"Thu Feb 12 2026 13:44:05 GMT+0000 (GMT)",,,,"K3-50","",,,,"59b7ea91-2b50-4aa4-89a8-b54d13146f1b",9422,,,
+"K3-53","K3 - Projekt i team","Visa vem som ansvarar för varje uppgift",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:53:38 GMT+0000 (GMT)","Thu Feb 12 2026 07:45:48 GMT+0000 (GMT)","Tue Feb 10 2026 19:26:28 GMT+0000 (GMT)",,"Thu Feb 12 2026 07:45:48 GMT+0000 (GMT)",,,,"K3-50","",,,,"643f8086-f5fe-42b8-904c-875afdda881a",9780,,,
+"K3-54","K3 - Projekt i team","Tom-state när inget finns",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:53:48 GMT+0000 (GMT)","Thu Feb 12 2026 08:22:09 GMT+0000 (GMT)","Tue Feb 10 2026 19:26:28 GMT+0000 (GMT)",,"Thu Feb 12 2026 08:22:09 GMT+0000 (GMT)",,,,"K3-50","",,,,"1422de38-3e2e-4a6b-8f78-3ddd9add05ef",9744,,,
+"K3-55","K3 - Projekt i team","Filter: visa endast uppgifter tilldelade mig",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:54:46 GMT+0000 (GMT)","Thu Feb 12 2026 13:44:11 GMT+0000 (GMT)","Tue Feb 10 2026 19:26:28 GMT+0000 (GMT)",,"Thu Feb 12 2026 13:44:11 GMT+0000 (GMT)",,,,"K3-50","",,,,"85f6685b-1b9c-431a-88c7-4c2105734998",9422,,,
+"K3-56","K3 - Projekt i team","Växla mellan “Alla” och “Mina”",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 10:55:13 GMT+0000 (GMT)","Thu Feb 12 2026 07:45:31 GMT+0000 (GMT)","Tue Feb 10 2026 19:26:28 GMT+0000 (GMT)",,"Thu Feb 12 2026 07:45:31 GMT+0000 (GMT)",,,,"K3-50","",,,,"698e3d1f-eb2c-49c7-b889-4c91491af690",9780,,,
+"K3-57","K3 - Projekt i team","Gemensam kontakt- och informationshantering",,"Backlog",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 10 2026 12:48:24 GMT+0000 (GMT)","Tue Feb 10 2026 12:49:30 GMT+0000 (GMT)",,,,,,,,"",,,,"e2efbb3b-8228-4368-b280-272cb7ec678e",12358,,,
+"K3-58","K3 - Projekt i team","Som team vill vi kunna hantera en gemensam kontaktlista",,"In Progress",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 10 2026 12:48:42 GMT+0000 (GMT)","Wed Feb 18 2026 10:57:39 GMT+0000 (GMT)","Wed Feb 18 2026 10:57:39 GMT+0000 (GMT)",,,,,,"K3-57","",,,,"17389bce-968d-499c-8171-7db01ea72b9d",948,,,
+"K3-59","K3 - Projekt i team","Som team vill vi kunna importera/exportera kontakter till vCard","* ","Backlog",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 10 2026 12:49:17 GMT+0000 (GMT)","Tue Feb 10 2026 12:49:17 GMT+0000 (GMT)",,,,,,,"K3-57","",,,,"b3ded2a0-96da-4ae5-8f6f-11458d255ffa",12357,,,
+"K3-60","K3 - Projekt i team","Som team vill vi kunna klicka på telefonnummer och e-postadresser för snabb kontakt via standardappar.",,"Backlog",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 10 2026 12:49:30 GMT+0000 (GMT)","Tue Feb 10 2026 12:49:30 GMT+0000 (GMT)",,,,,,,"K3-57","",,,,"59e834b5-11c3-49aa-9a6c-1c0f6d1e9c1a",12356,,,
+"K3-64","K3 - Projekt i team","Som team vill vi ha optimerad och skalbar kod",,"In Progress",,"High",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 12 2026 13:31:16 GMT+0000 (GMT)","Tue Feb 17 2026 11:17:47 GMT+0000 (GMT)","Tue Feb 17 2026 11:08:22 GMT+0000 (GMT)",,,,,,,"",,,,"49dc0f4c-3df7-4001-9ff4-9301a6d2e28f",2378,,,
+"K3-65","K3 - Projekt i team","optimera listor för N antal objekt",,"Done",,"No priority",,,"alexander.jansson@chasacademy.se","alexander.jansson@chasacademy.se","",,,,,"Thu Feb 12 2026 13:31:57 GMT+0000 (GMT)","Tue Feb 17 2026 11:08:18 GMT+0000 (GMT)",,,"Tue Feb 17 2026 11:08:07 GMT+0000 (GMT)",,,,"K3-64","",,,,"dd60ad4f-7b94-4811-a369-6d9e397cebb8",2378,,,
+"K3-66","K3 - Projekt i team","hitta upprepningar i kod och gör om till återanvändbar kod istället",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 12 2026 13:32:32 GMT+0000 (GMT)","Thu Feb 12 2026 13:32:32 GMT+0000 (GMT)",,,,,,,"K3-64","",,,,"a884eb77-2b03-452e-9067-b264b505bd17",9433,,,
+"K3-67","K3 - Projekt i team","sätt paus mellan localstorage calls (pga synkronitet)",,"Backlog",,"No priority",,,"alexander.jansson@chasacademy.se",,"",,,,,"Thu Feb 12 2026 13:47:08 GMT+0000 (GMT)","Thu Feb 12 2026 13:47:09 GMT+0000 (GMT)",,,,,,,"K3-64","",,,,"62b351a8-8558-4b98-aef3-d6dfacac94bc",9419,,,
+"K3-68","K3 - Projekt i team","US: Modernisering av användargränssnitt och systeminställningar",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Mon Feb 16 2026 08:39:37 GMT+0000 (GMT)","Tue Feb 17 2026 11:08:04 GMT+0000 (GMT)","Mon Feb 16 2026 08:45:01 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:08:04 GMT+0000 (GMT)",,,,,"",,,,"6cea996d-2251-42e9-aa26-63be0da9fd01",2378,,,
+"K3-69","K3 - Projekt i team","Göra korten mer kompakta så all informatin är uppdelad bra",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Mon Feb 16 2026 08:41:58 GMT+0000 (GMT)","Tue Feb 17 2026 11:08:02 GMT+0000 (GMT)","Mon Feb 16 2026 08:44:57 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:08:02 GMT+0000 (GMT)",,,,"K3-68","",,,,"a31da6ac-a2c9-4783-ab1f-300cf7c91ede",2378,,,
+"K3-70","K3 - Projekt i team","Tydliga varningar för sena uppgifter",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Mon Feb 16 2026 08:43:27 GMT+0000 (GMT)","Tue Feb 17 2026 11:08:01 GMT+0000 (GMT)","Mon Feb 16 2026 08:44:55 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:08:01 GMT+0000 (GMT)",,,,"K3-68","",,,,"1d6fd7d1-d8b3-429a-8927-e3cdfafa898b",2378,,,
+"K3-71","K3 - Projekt i team","Uppfräschning av Dashboarden",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Mon Feb 16 2026 08:43:37 GMT+0000 (GMT)","Tue Feb 17 2026 11:07:58 GMT+0000 (GMT)","Mon Feb 16 2026 08:44:50 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:07:58 GMT+0000 (GMT)",,,,"K3-68","",,,,"d43c5755-20e7-4434-9751-463eabbd2ebf",2378,,,
+"K3-72","K3 - Projekt i team","Fixa ordningen i Inställningar",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Mon Feb 16 2026 08:44:03 GMT+0000 (GMT)","Tue Feb 17 2026 11:07:56 GMT+0000 (GMT)","Mon Feb 16 2026 08:44:48 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:07:56 GMT+0000 (GMT)",,,,"K3-68","",,,,"3542fd21-6723-4b1a-86e2-d9c1a22a0571",2378,,,
+"K3-73","K3 - Projekt i team","nav knappar i korten",,"Done",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Mon Feb 16 2026 08:44:21 GMT+0000 (GMT)","Tue Feb 17 2026 11:07:54 GMT+0000 (GMT)","Mon Feb 16 2026 08:44:43 GMT+0000 (GMT)",,"Tue Feb 17 2026 11:07:54 GMT+0000 (GMT)",,,,"K3-68","",,,,"66b43382-9d3b-40f2-87a5-ea476b34410f",2378,,,
+"K3-74","K3 - Projekt i team","Refakturera kod",,"Todo",,"High",,,"joco.borghol@gmail.com","alexander.jansson@chasacademy.se","",,,,,"Tue Feb 17 2026 11:14:03 GMT+0000 (GMT)","Tue Feb 17 2026 11:50:24 GMT+0000 (GMT)",,,,,,,,"",,,,"b5994e09-3ed5-4493-aae1-7468c68e620f",2362,,,
+"K3-75","K3 - Projekt i team","Testning av alla funktioner manuellt","Göra efter Alex har optimerat koden","Todo",,"Medium",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 17 2026 11:16:30 GMT+0000 (GMT)","Tue Feb 17 2026 11:23:35 GMT+0000 (GMT)",,,,,,,,"",,,,"a797892c-7f41-42b9-890a-f6636254711d",2362,,,
+"K3-76","K3 - Projekt i team","ReadMe.md","* Projektbeskrivning
+* Installation och körning
+* Testning (hur man kör tester)
+* Team members och roller
+* Sprint planning & retrospective sammanfattning
+* Lighthouse scores (skärmdumpar)
+* Länk till deployed app (GitHub Pages)
+* Reflektioner kring tillgänglighet och prestanda","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:21:18 GMT+0000 (GMT)","Tue Feb 17 2026 11:23:37 GMT+0000 (GMT)",,,,,,,,"",,,,"f58b3c73-855e-4e85-a81a-e2a452654ce4",2362,,,
+"K3-77","K3 - Projekt i team","PWA-funktionalitet","✅ **Service Worker**: Implementerad för offline-cache
+
+✅ **Manifest-fil**: För installation på hemskärm
+
+✅ **App-ikon**: Funktionell ikon för hemskärm","In Progress",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 17 2026 11:22:55 GMT+0000 (GMT)","Tue Feb 17 2026 16:15:21 GMT+0000 (GMT)","Tue Feb 17 2026 14:42:25 GMT+0000 (GMT)",,,,,,,"",,,,"8dd53cb0-0c6e-46b8-9ff8-9e58a35d5468",2164,,,
+"K3-78","K3 - Projekt i team","Tillgänglighet (WCAG 2.1 Level AA)","✅ **Semantisk HTML**: Korrekt användning av HTML5-element
+
+✅ **ARIA-attribut**: Där semantisk HTML inte räcker till
+
+✅ **Tangentbordsnavigation**: Alla funktioner går att nå med tangentbord
+
+✅ **Skärmläsarstöd**: Tydliga labels och beskrivningar
+
+✅ **Kontrastförhållanden**: Minst 4.5:1 för normal text - G
+
+✅ **Automatisk validering**: Inga kritiska fel i Lighthouse/axe","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:25:01 GMT+0000 (GMT)","Wed Feb 18 2026 10:21:01 GMT+0000 (GMT)",,,,,,,,"",,,,"007ad37d-de60-46b8-bbd9-b4bc1ef884aa",2361,,,
+"K3-79","K3 - Projekt i team","Prestanda","✅ **Lighthouse-score**: Minst 80 i alla kategorier (Performance, Accessibility, Best Practices, SEO)
+
+✅ **Lazy loading**: För bilder och icke-kritiskt innehåll
+
+✅ **Optimerade bilder**: Rätt format och storlek
+
+✅ **Minimerad CSS/JS**: Komprimerade filer för produktion","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:26:41 GMT+0000 (GMT)","Tue Feb 17 2026 11:26:41 GMT+0000 (GMT)",,,,,,,,"",,,,"9c5e2bb4-7cca-40bd-a424-62a4731a1955",2359,,,
+"K3-80","K3 - Projekt i team","Testning","✅ **Enhetstester**: Minst 80% kodtäckning med Jest
+
+✅ **DOM-tester**: Testing Library för UI-komponenter
+
+✅ **Tillgänglighetstester**: Automatiserade a11y-tester
+
+✅ **CI/CD**: Automatiska tester vid push till GitHub","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:27:03 GMT+0000 (GMT)","Tue Feb 17 2026 11:27:03 GMT+0000 (GMT)",,,,,,,,"",,,,"1074c79c-c178-4a58-96eb-e8fdfbccbfed",2359,,,
+"K3-81","K3 - Projekt i team","Scrum & Teamarbete","✅ **Sprint planning**: Dokumenterad planering av 3 sprintar
+
+✅ **Daily standup**: Dokumenterade daily standups
+
+✅ **Pull requests**: Alla features via PR med code review
+
+✅ **Sprint retrospective**: Dokumenterad retrospektiv efter varje sprint
+
+✅ **GitHub Projects**: Använd board för backlog och sprint planning","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:27:30 GMT+0000 (GMT)","Tue Feb 17 2026 11:27:49 GMT+0000 (GMT)",,,,,,,,"",,,,"ac2c3daf-5536-4b90-bfe4-24bfb3a1fb11",2358,,,
+"K3-82","K3 - Projekt i team","VG Tasks (Sist)","**Avancerad arkitektur (VG)**
+
+✅ **Separation of Concerns**: Tydlig separation mellan data, logik och presentation
+
+✅ **Återanvändbara komponenter**: Modulär struktur med små, testbara komponenter
+
+✅ **Design patterns**: Använd lämpliga design patterns (Module, Observer, etc.)
+
+<aside> ♿
+
+**Avancerad tillgänglighet (VG)**
+
+✅ **Inga WCAG-fel**: Lighthouse och axe visar 0 kritiska fel
+
+✅ **Avancerad ARIA**: Korrekt användning av ARIA-live regions, modal dialogs
+
+✅ **Focus management**: Professionell hantering av fokus vid dynamiskt innehåll
+
+</aside>
+
+<aside> 📊
+
+**Extra features (nice-to-have)**
+
+✅ **Data-export**: Möjlighet att exportera data som JSON/CSV
+
+✅ **Data-import**: Importera tidigare exporterad data
+
+✅ **Dark mode**: Växla mellan ljust och mörkt tema KLAR
+
+✅ **Statistik/visualisering**: Visa data i diagram eller statistik
+
+✅ **Notifikationer**: Push notifications via Service Worker
+
+</aside>","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:29:05 GMT+0000 (GMT)","Wed Feb 18 2026 10:38:12 GMT+0000 (GMT)",,,,,,,,"",,,,"31e49a57-c010-4bf3-8fd2-bb1d0bc3c19a",2357,,,
+"K3-83","K3 - Projekt i team","Städ",,"Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:44:01 GMT+0000 (GMT)","Tue Feb 17 2026 11:49:46 GMT+0000 (GMT)",,,,,,,,"",,,,"dbad8390-aae0-498f-bbb2-12bbb4ba0539",2342,,,
+"K3-84","K3 - Projekt i team","Säkerställ och testa att DOM elementen omrenderas optimalt",,"Todo",,"High",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:45:52 GMT+0000 (GMT)","Tue Feb 17 2026 11:45:52 GMT+0000 (GMT)",,,,,,,,"",,,,"df143440-4667-4772-8317-d8227940b91d",2340,,,
+"K3-85","K3 - Projekt i team","Grundläggande funktionalitet","✅ **Offline-first**: Appen ska fungera helt utan internetanslutning
+
+✅ **LocalStorage**: All data sparas i LocalStorage
+
+✅ **Vanilla JavaScript**: Ingen användning av ramverk (React, Vue, etc.)
+
+✅ **Responsiv design**: Fungerar på mobil (min 320px) och desktop
+
+✅ **Mobile-first**: Designad med mobile-first-approach","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:47:25 GMT+0000 (GMT)","Wed Feb 18 2026 10:23:39 GMT+0000 (GMT)",,,,,,,,"",,,,"a1581121-9902-41e6-8c71-721de94f9ba6",2339,,,
+"K3-86","K3 - Projekt i team","Rensa bort/dölja knappar som ej används",,"Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:49:22 GMT+0000 (GMT)","Tue Feb 17 2026 11:49:22 GMT+0000 (GMT)",,,,,,,"K3-83","",,,,"db201c7e-a44d-459b-8c2b-0f7800004d14",2337,,,
+"K3-87","K3 - Projekt i team","CSS filerna",,"In Review",,"No priority",,,"joco.borghol@gmail.com","joco.borghol@gmail.com","",,,,,"Tue Feb 17 2026 11:49:32 GMT+0000 (GMT)","Wed Feb 18 2026 10:47:14 GMT+0000 (GMT)","Wed Feb 18 2026 10:20:26 GMT+0000 (GMT)",,,,,,"K3-83","",,,,"19337810-0d8f-4554-a843-cc87b9d3c3ab",959,,,
+"K3-88","K3 - Projekt i team","Flytta kommentarer från Discord till kommentarer i mergade PRs",,"Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:55:53 GMT+0000 (GMT)","Wed Feb 18 2026 08:37:34 GMT+0000 (GMT)",,,,,,,,"",,,,"68040c17-b29e-45c6-ab57-87642ba073ae",2330,,,
+"K3-89","K3 - Projekt i team","Dokumentera processer","Dokumentera era agila processer enligt scrum och samla i ett dokument som vid deadline lämnas in som scrum.pdf","Todo",,"No priority",,,"joco.borghol@gmail.com",,"",,,,,"Tue Feb 17 2026 11:58:05 GMT+0000 (GMT)","Tue Feb 17 2026 11:58:05 GMT+0000 (GMT)",,,,,,,,"",,,,"afd2d1dd-f9a7-4dac-941d-4dc3da6b3cf7",2328,,,
+"K3-90","K3 - Projekt i team","Calendar",,"In Progress",,"No priority","035e0711-50d2-45fc-bc6b-0e1aa8ce8047","K3 - Project i team LIA-APP","hussein.hasnawy@gmail.com","hussein.hasnawy@gmail.com","",,,,,"Wed Feb 18 2026 08:41:55 GMT+0000 (GMT)","Wed Feb 18 2026 08:41:56 GMT+0000 (GMT)","Wed Feb 18 2026 08:41:55 GMT+0000 (GMT)",,,,,,,"",,,,"09e57981-2e68-4528-9d2c-b786d1e4f98d",1084,,,

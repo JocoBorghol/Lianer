@@ -1,10 +1,26 @@
-import { jest } from '@jest/globals';
-import { waitFor, fireEvent } from '@testing-library/dom';
+import { jest, beforeAll, describe, beforeEach, afterEach, test, expect } from '@jest/globals';
+import { fireEvent } from '@testing-library/dom';
+
+// 1. GLOBALA MOCKAR FÖR CI/CD (LÄGG TILL DETTA HÄR)
+beforeAll(() => {
+    // Mocka alert eftersom JSDOM (GitHub Actions) inte stödjer popup-fönster
+    global.alert = jest.fn();
+    
+    // Tysta ner console.log för att få renare loggar i din pipeline
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+
+// Din befintliga FileReader-mock
+global.FileReader = class {
+    readAsText() { 
+        setTimeout(() => this.onload({ target: { result: "Namn,Telefon\nJohn Doe,123456" } }), 0);
+    }
+};
 
 const flushPromises = () => new Promise(process.nextTick);
 
-// Mock globals
-global.qrcode = function (a, b) {
+// Mock globals för QR och Kamera
+global.qrcode = function () {
     this.addData = jest.fn();
     this.make = jest.fn();
     this.createImgTag = jest.fn().mockReturnValue("<img>");
@@ -48,6 +64,7 @@ describe("contactsView", () => {
             createVCard: jest.fn()
         };
 
+        // VIKTIGT: Se till att sökvägarna här matchar dina filnamn exakt (case sensitive)
         jest.unstable_mockModule("../js/utils/contactsDb.js", () => mockContactsDb);
         jest.unstable_mockModule("../js/storage.js", () => mockStorage);
         jest.unstable_mockModule("../js/utils/vcard.js", () => mockVcard);

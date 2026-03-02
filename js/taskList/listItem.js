@@ -1,36 +1,13 @@
-import { updateTaskStatus } from "./updateTaskStatus.js";
 import { TASK_STATUSES } from "../status.js";
-import { removeById, loadState, saveState } from "../storage.js";
-import { addTaskDialog, showConfirmDialog, showPromptDialog } from "../comps/dialog.js";
-import { setView } from "../views/viewController.js";
+import { formatTaskTime } from "../data/tasks.js";
+import { getPeople } from "../people/peopleService.js";
+import { loadState } from "../storage.js";
 
 const formatDate = (dateStr) => {
   if (!dateStr || dateStr === 0 || dateStr === "Nyss") return "Nyss";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('sv-SE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-};
-
-const moveTask = (id, direction) => {
-  const state = loadState();
-  const tasks = state.tasks || [];
-  const index = tasks.findIndex(t => String(t.id) === String(id));
-  if (index === -1) return;
-
-  const currentTask = tasks[index];
-  const sameStatusTasks = tasks.filter(t => t.status === currentTask.status);
-  const internalIndex = sameStatusTasks.findIndex(t => String(t.id) === String(id));
-  const targetInternalIndex = internalIndex + direction;
-
-  if (targetInternalIndex >= 0 && targetInternalIndex < sameStatusTasks.length) {
-    const targetTask = sameStatusTasks[targetInternalIndex];
-    const globalTargetIndex = tasks.findIndex(t => String(t.id) === String(targetTask.id));
-    const temp = tasks[index];
-    tasks[index] = tasks[globalTargetIndex];
-    tasks[globalTargetIndex] = temp;
-    saveState(state);
-    window.dispatchEvent(new CustomEvent('renderApp'));
-  }
 };
 
 const renderAssigneeAvatars = (assignedNames = []) => {
@@ -42,13 +19,30 @@ const renderAssigneeAvatars = (assignedNames = []) => {
 
   if (!assignedNames || assignedNames.length === 0 || (assignedNames.length === 1 && assignedNames[0] === "Ingen")) {
     const empty = document.createElement("span");
-    empty.className = "avatar-empty";
-    empty.innerHTML = "🟢 Ledig <span style='font-size: 10px; opacity: 0.5; margin-left: 4px;'>✎</span>";
+    empty.className = "avatar-empty glow-up-btn";
+    empty.innerHTML = "<span class='status-dot'></span> Ledig";
     container.append(empty);
     return container;
   }
 
   const validNames = assignedNames.filter(name => name && name !== "Ingen");
+  const allPeople = getPeople().filter(name => name !== "Ingen");
+  
+  // If all team members are assigned
+  const isFullTeam = validNames.length > 0 && validNames.length >= allPeople.length && allPeople.length > 0;
+
+  if (isFullTeam) {
+    const teamBadge = document.createElement("div");
+    teamBadge.className = "team-badge full-team tooltip-container";
+    teamBadge.setAttribute("aria-label", validNames.join(", "));
+    teamBadge.setAttribute("role", "text");
+    teamBadge.setAttribute("tabindex", "0");
+    const stateUrl = loadState();
+    const currentTeamName = stateUrl?.settings?.teamName || "TEAM MALMÖ";
+    teamBadge.textContent = currentTeamName.toUpperCase();
+    container.append(teamBadge);
+    return container;
+  }
 
   validNames.forEach((name) => {
     const avatar = document.createElement("div");
@@ -67,23 +61,62 @@ const renderAssigneeAvatars = (assignedNames = []) => {
   return container;
 };
 
-export const listItem = (task) => {
+export const listItem = (task, actions = {}) => {
+  const safeActions = {
+    onNavigate: actions.onNavigate ?? (() => {}),
+    onEditTask: actions.onEditTask ?? (() => {}),
+    onMoveTask: actions.onMoveTask ?? (() => {}),
+    onChangeStatus: actions.onChangeStatus ?? (() => {}),
+    onDeleteTask: actions.onDeleteTask ?? (() => {})
+  };
+
   const isClosed = task.status === TASK_STATUSES.CLOSED;
   const isDone = task.status === TASK_STATUSES.DONE;
   const isTodo = task.status === TASK_STATUSES.TODO;
 
   const div = document.createElement("div");
-  div.className = `listItem ${isClosed ? "is-closed" : ""}`;
+  let cardClass = `listItem ${isClosed ? "is-closed" : ""}`;
+  if (task.priority === "Hög") cardClass += " priority-high";
+  if (task.taskType === "Möte") cardClass += " task-type-meeting";
+  div.className = cardClass;
   div.setAttribute("role", "listitem");
   div.setAttribute("tabindex", "0");
+
+  // DRAG AND DROP API
+  div.setAttribute("draggable", "true");
+  div.setAttribute("data-task-id", task.id);
+  
+  div.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("text/plain", task.id);
+    e.dataTransfer.effectAllowed = "move";
+    // Timeout is needed so drag image captures visible state before applying opacity
+    setTimeout(() => div.classList.add("dragging"), 0);
+  });
+  
+  div.addEventListener("dragend", () => {
+    div.classList.remove("dragging");
+  });
 
   const headerRow = document.createElement("div");
   headerRow.className = "card-header-row";
 
   const dateRow = document.createElement("div");
   dateRow.className = "date-row";
+
+  // Time chip
+  const timeLabel = task.taskTime ? formatTaskTime(task.taskTime) : "";
+  const timeChipHtml = task.taskTime
+    ? `<div class="meta-item" role="group" aria-label="Tid: ${timeLabel}"><span class="meta-label" aria-hidden="true">TID</span><span class="meta-value" aria-hidden="true">${timeLabel}</span></div>`
+    : "";
+
+  // Priority chip
+  const prioChipHtml = task.priority === "Hög"
+    ? `<span class="task-priority-chip" aria-label="Prioritet: Hög">🔴 Hög</span>`
+    : "";
+
   dateRow.innerHTML = `
     <div class="meta-item" role="group" aria-label="Skapad: ${formatDate(task.createdAt)}"><span class="meta-label" aria-hidden="true">SKAPAD</span><span class="meta-value" aria-hidden="true">${formatDate(task.createdAt)}</span></div>
+    ${timeChipHtml}${prioChipHtml}
   `;
 
   if (task.deadline) {
@@ -109,18 +142,48 @@ export const listItem = (task) => {
     <p class="taskDescription">${task.description || "Ingen beskrivning."}</p>
   `;
 
-  if (task.contactId && task.contactName) {
-    const linkDiv = document.createElement("div");
-    linkDiv.className = "task-contact-explicit";
-    linkDiv.style.cssText = "margin-top: 10px; padding: 6px 10px; background: rgba(34,211,238,0.1); border-radius: 4px; color: var(--accent-cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(34,211,238,0.2); width: fit-content;";
-    linkDiv.innerHTML = `<span>🔗</span> Länkad till: ${task.contactName} <span style="opacity:0.6;font-size:10px;">↗</span>`;
+  const hasNotes = task.notes && task.notes.length > 0;
+  
+  if (hasNotes) {
+    const latestNote = task.notes[task.notes.length - 1];
+    const noteText = typeof latestNote === 'object' ? (latestNote.text || latestNote.content || "") : latestNote;
+    if (noteText) {
+      mainContent.innerHTML += `
+        <div class="task-latest-note">
+          <strong style="color: var(--text-main); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Senaste Notis</strong>
+          ${noteText}
+        </div>
+      `;
+    }
+  }
 
-    linkDiv.onclick = (e) => {
-      e.stopPropagation();
-      setView('contacts', { highlightId: task.contactId });
-    };
+  if ((task.contactId && task.contactName) || hasNotes) {
+    const extraRow = document.createElement("div");
+    extraRow.className = "task-extra-row";
 
-    mainContent.append(linkDiv);
+    if (task.contactId && task.contactName) {
+      const linkDiv = document.createElement("div");
+      linkDiv.className = "task-contact-pill tooltip-container";
+      linkDiv.setAttribute("aria-label", "Gå till kontakt");
+      linkDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; margin-right:2px;">link</span> Kontakt: ${task.contactName} <span class="material-symbols-rounded arrow-icon">arrow_outward</span>`;
+
+      linkDiv.onclick = (e) => {
+        e.stopPropagation();
+        safeActions.onNavigate('contacts', { highlightId: task.contactId });
+      };
+
+      extraRow.append(linkDiv);
+    }
+
+    if (hasNotes) {
+      const noteBadge = document.createElement("div");
+      noteBadge.className = "task-note-indicator tooltip-container";
+      noteBadge.setAttribute("aria-label", `Denna uppgift har ${task.notes.length} notering(ar)`);
+      noteBadge.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">chat</span>`;
+      extraRow.append(noteBadge);
+    }
+
+    mainContent.append(extraRow);
   }
 
   const footer = document.createElement("div");
@@ -131,12 +194,8 @@ export const listItem = (task) => {
 
   const avatars = renderAssigneeAvatars(assignedArray);
 
-  // FIXAD: Tar inte emot 'e' här eftersom addBtn-hjälparen hanterar det!
-  const openEditDialog = () => {
-    addTaskDialog(task);
-  };
+  const openEditDialog = () => safeActions.onEditTask(task);
 
-  // Om man klickar direkt på avatarerna
   avatars.onclick = (e) => {
     e.stopPropagation();
     openEditDialog();
@@ -164,35 +223,34 @@ export const listItem = (task) => {
     controls.append(btn);
   };
 
-  addBtn("↑", "Flytta upp", () => moveTask(task.id, -1));
-  addBtn("↓", "Flytta ner", () => moveTask(task.id, 1));
+  addBtn("↑", "Flytta upp", () => safeActions.onMoveTask(task.id, "up"));
+  addBtn("↓", "Flytta ner", () => safeActions.onMoveTask(task.id, "down"));
 
   if (!isTodo && !isClosed) {
     const prevStatus = isDone ? TASK_STATUSES.IN_PROGRESS : TASK_STATUSES.TODO;
-    addBtn("←", "Flytta vänster", () => updateTaskStatus(task.id, prevStatus));
+    addBtn("←", "Flytta vänster", () => safeActions.onChangeStatus(task.id, prevStatus));
   }
   if (!isDone && !isClosed) {
     const nextStatus = isTodo ? TASK_STATUSES.IN_PROGRESS : TASK_STATUSES.DONE;
-    addBtn("→", "Flytta höger", () => updateTaskStatus(task.id, nextStatus));
+    addBtn("→", "Flytta höger", () => safeActions.onChangeStatus(task.id, nextStatus));
   }
 
   if (!isClosed) {
-    // FIXAD: Nu fungerar din redigera-knapp igen!
     addBtn('<span class="material-symbols-rounded">edit</span>', "Redigera", openEditDialog, "edit-btn");
   }
 
-  addBtn("✕", "Ta bort", async () => {
-    if (isClosed) {
-      const confirmed = await showConfirmDialog("Radera permanent?");
-      if (confirmed) removeById(task.id);
-    } else {
-      const reason = await showPromptDialog("Anledning till stängning:");
-      if (reason?.trim()) updateTaskStatus(task.id, TASK_STATUSES.CLOSED, reason.trim());
-    }
-  }, "delete-btn");
+  addBtn("✕", "Ta bort", () => safeActions.onDeleteTask(task), "delete-btn");
 
   footer.append(controls);
   div.append(headerRow, mainContent, footer);
+
+  // Klick på själva kortet (men inte knapparna) för att expandera/kollapsa
+  div.addEventListener("click", (e) => {
+    if (e.target.closest('.taskControls') || e.target.closest('.assignee-avatars-list') || e.target.closest('.task-contact-pill')) {
+      return;
+    }
+    div.classList.toggle('expanded');
+  });
 
   return div;
 };

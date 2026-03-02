@@ -1,10 +1,9 @@
 import { Btn } from "../comps/btn.js";
-import { setView } from "../views/viewController.js";
 import { toggleThemeBtn } from "../comps/themeBtn.js";
 import { loadState, saveState } from "../storage.js";
 import { subscribe } from "../observer.js";
 
-export const menu = () => {
+export const menu = ({navigate, onAddTask}) => {
   const div = document.createElement("div");
   div.classList.add("menu");
 
@@ -115,7 +114,7 @@ export const menu = () => {
           const actualBtn = toggleThemeBtn();
           actualBtn.click();
         } else {
-          setView(b.view);
+          navigate?.(b.view);
         }
       }
     });
@@ -126,7 +125,7 @@ export const menu = () => {
       const addBtn = Btn({
         text: `<span class="nav-icon material-symbols-rounded">add_circle</span><span class="nav-text">Lägg till uppgift</span>`,
         className: "menu-btn addTaskFab",
-        onClick: () => {}
+        onClick: () => onAddTask?.()
       });
       mainButtons.append(addBtn);
     }

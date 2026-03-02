@@ -1,76 +1,66 @@
+import { renderCalendar } from "./calendarView.js";
+import { taskScreen } from "../taskList/taskScreen.js";
+import { renderSettings } from "./settingsView.js"; 
+import { renderContacts } from "./contactsView.js";
 import { renderDashboard } from "./dashboardView.js";
-// calendarView, taskScreen, settingsView are lazy-loaded on demand (see render())
-// contactsView is also lazy-loaded (see contacts block in render())
-import { loadState } from "../storage.js";
 
-let container = null;
-let activeView = "dashboard";
-let currentRenderId = 0;
-
-export function initViewController(target) {
-  container = target;
-}
-
-export async function setView(view, params = null) {
-  activeView = view;
-  if (params) window.viewParams = params;
-  await render();
-}
-
-export async function rerenderActiveView() {
-  await render();
-}
-
-async function render() {
-  if (!container) return;
-
-  const renderId = ++currentRenderId;
-
-  // Rensa containern helt innan ny rendering för att undvika dubbla element
-  container.innerHTML = "";
-
-  // Hämta ALLTID det senaste statet här för att garantera att nya tasks finns med
-  const state = loadState();
-
-  if (activeView === "dashboard") {
-    if (renderId !== currentRenderId) return;
-    // Vi skickar med state även här om dashboardView behöver det
-    renderDashboard(container, state);
-    return;
+export class ViewController {
+  constructor(target, service) {
+    this.container = target;
+    this.service = service;
+    this.activeView = "dashboard";
+    this.params = null; 
   }
 
-  if (activeView === "calendar") {
-    const { renderCalendar } = await import("./calendarView.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = ""; // Extra säkerhet ifall importen dragit ut på tiden
-    renderCalendar(container);
-    return;
+  setView(view, params = null) {
+    this.activeView = view;
+    this.params = params;
+    this.render();
   }
 
-  if (activeView === "tasks") {
-    const { taskScreen } = await import("../taskList/taskScreen.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = "";
-    container.append(taskScreen());
-    return;
+  navigate(view, params = null) {
+    this.setView(view, params);
   }
 
-  if (activeView === "settings") {
-    const { renderSettings } = await import("./settingsView.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = "";
-    renderSettings(container, rerenderActiveView);
-    return;
+  rerender() {
+    this.render();
   }
 
-  if (activeView === "contacts") {
-    const params = window.viewParams;
-    window.viewParams = null; // Rensa direkt (params redan kopierad)
-    // Lazy-load contactsView to reduce initial JS payload
-    const { renderContacts } = await import("./contactsView.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = "";
-    renderContacts(container, params);
-    return;
+  render() {
+    if (!this.container) return;
+
+    // Rensa containern helt innan ny rendering
+    this.container.innerHTML = "";
+
+    if (this.activeView === "dashboard") {
+      renderDashboard(this.container);
+      return;
+    }
+
+    if (this.activeView === "calendar") {
+      renderCalendar(this.container);
+      return;
+    }
+
+    if (this.activeView === "tasks") {
+      this.container.append(
+        taskScreen({
+          taskService: this.service,
+          navigate: (view, params) => this.setView(view, params)
+        })
+      );
+      return;
+    }
+
+    if (this.activeView === "settings") {
+      renderSettings(this.container, () => this.rerender(), this.service);
+      return;
+    }
+
+    if (this.activeView === "contacts") {
+      renderContacts(this.container, this.params);
+      this.params = null;
+      return;
+    }
   }
 }

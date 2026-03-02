@@ -24,7 +24,7 @@ function loadVendorScripts() {
   ];
   return Promise.all(scripts.map(s => {
     if (document.querySelector(`script[src="${s.src}"]`)) return Promise.resolve();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const el = document.createElement("script");
       el.src = s.src;
       el.async = true;

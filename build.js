@@ -93,7 +93,7 @@ async function build() {
     console.log('Extracting critical CSS for inlining...');
     const variablesCss = fs.readFileSync(path.join(__dirname, 'css/variables.css'), 'utf8');
     const mainCssLines = fs.readFileSync(path.join(__dirname, 'css/main.css'), 'utf8').split('\n');
-    const criticalMainCss = mainCssLines.slice(0, 172).join('\n');
+    const criticalMainCss = mainCssLines.slice(0, 173).join('\n');
     const criticalCssRaw = variablesCss + '\n' + criticalMainCss;
     const criticalResult = await postcss([cssnano]).process(criticalCssRaw, { from: undefined });
     const criticalCssInline = criticalResult.css;

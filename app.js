@@ -1,11 +1,15 @@
-import { initSeed } from "./js/taskList/seed.js";
 import { menu } from "./js/menu/sideMenu.js";
 import { subscribe } from "./js/observer.js";
-import { initViewController, rerenderActiveView, setView } from "./js/views/viewController.js";
 import { initTheme } from "./js/theme.js";
-import { addTaskDialog } from "./js/comps/dialog.js";
+import { openTaskDialog } from "./js/menu/openTaskDialog.js";
+import { maybeShowWelcomeOverlay } from "./js/comps/welcomeOverlay.js";
 
-/**
+import { initSeed } from "./js/taskList/seed.js";
+import { TaskRepo } from "./js/repo/taskRepo.js";
+import { TaskService } from "./js/service/taskService.js";
+import { ViewController } from "./js/views/viewController.js";
+
+ /**
  * @file app.js
  * @description Huvudentrépunkt för Lianer Project Management App.
  * Hanterar initiering av tema, layoutstruktur och globala händelselyssnare.
@@ -13,6 +17,13 @@ import { addTaskDialog } from "./js/comps/dialog.js";
 
 // Initiera tema (Mörkt/Ljust)
 initTheme();
+
+
+// Initirar våra instanser
+const taskRepo = new TaskRepo();
+const taskService = new TaskService(taskRepo);
+taskService.init();
+
 
 /** @type {HTMLElement} - Huvudcontainern definierad i index.html */
 const app = document.getElementById("app");
@@ -26,7 +37,7 @@ const sideMenuDiv = document.createElement("aside");
 sideMenuDiv.classList.add("left");
 sideMenuDiv.setAttribute("role", "navigation");
 sideMenuDiv.setAttribute("aria-label", "Huvudmeny");
-sideMenuDiv.append(menu());
+
 
 /** * Huvudinnehåll (Main)
  * @description Använder <main> för att markera applikationens centrala innehåll, vilket är kritiskt för tillgänglighet.
@@ -39,7 +50,13 @@ mainContent.setAttribute("id", "main-content");
 /**
  * Initiera vyn-hanteraren och koppla den till huvudytan.
  */
-initViewController(mainContent);
+const viewController = new ViewController(mainContent,taskService);
+const sideMenu = menu({
+  navigate:(view,params) => viewController.setView(view, params),
+  onAddTask: () => openTaskDialog({taskService})
+});
+sideMenuDiv.append(sideMenu);
+
 
 /**
  * Initiera startdata och sätt startvyn till dashboard.
@@ -48,13 +65,23 @@ initViewController(mainContent);
  * before setView runs, rendering the dashboard twice.
  */
 initSeed();
-setView("dashboard");
-
-// Register observer AFTER initial render to prevent double-render
-subscribe(() => rerenderActiveView());
 
 // Bygg ihop applikationens grundstruktur atomiskt
 app.replaceChildren(sideMenuDiv, mainContent);
+
+viewController.setView("dashboard");
+
+// Register observer AFTER initial render to prevent double-render
+subscribe(() => viewController.rerender());
+
+// Show first-time welcome overlay (checks localStorage internally)
+maybeShowWelcomeOverlay(taskService);
+
+// Handle navigation events dispatched by overlay quick-start pills
+window.addEventListener("navigateTo", (e) => {
+  const view = e.detail;
+  if (view) viewController.setView(view);
+});
 
 /**
  * Global händelselyssnare för interaktioner.
@@ -64,16 +91,8 @@ app.replaceChildren(sideMenuDiv, mainContent);
 document.addEventListener("click", (e) => {
   /** @type {Element|null} - Hittar närmaste element med klassen .addTaskFab */
   const fabButton = e.target.closest(".addTaskFab");
-
   if (fabButton) {
-    // 1. Rensa bort gamla modal-overlays om de mot förmodan ligger kvar
-    const existingModal = document.querySelector(".modalOverlay");
-    if (existingModal) existingModal.remove();
-
-    /** * @type {HTMLDialogElement|HTMLElement} - Skapar en ny dialog-instans.
-     * För optimal tillgänglighet bör addTaskDialog returnera ett <dialog>-element.
-     */
-    addTaskDialog();
+    openTaskDialog({taskService});
   }
 });
 
