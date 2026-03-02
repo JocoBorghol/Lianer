@@ -1,116 +1,143 @@
 <!doctype html>
 <html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LIA App</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="stylesheet" href="./css/variables.css" />
+    <link rel="stylesheet" href="./css/main.css" />
+    <link
+      rel="stylesheet"
+      href="./css/dashboard.css"
+      media="print"
+      onload="this.media = 'all'"
+    />
+    <link
+      rel="stylesheet"
+      href="./css/tasks.css"
+      media="print"
+      onload="this.media = 'all'"
+    />
+    <link
+      rel="stylesheet"
+      href="./css/contacts.css"
+      media="print"
+      onload="this.media = 'all'"
+    />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LIA App</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" type="image/png" href="icons/icon-192.png" />
-  <meta name="theme-color" content="#3b82f6" />
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/main.css" />
-  <link rel="stylesheet" href="css/dashboard.css" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="css/tasks.css" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="css/contacts.css" media="print" onload="this.media='all'" />
+    <link rel="modulepreload" href="./app.js" />
+    <link rel="modulepreload" href="./js/taskList/seed.js" />
+    <link rel="modulepreload" href="./js/menu/sideMenu.js" />
+    <link rel="modulepreload" href="./js/observer.js" />
+    <link rel="modulepreload" href="./js/views/viewController.js" />
+    <link rel="modulepreload" href="./js/theme.js" />
+    <link rel="modulepreload" href="./js/comps/dialog.js" />
 
-  <link rel="modulepreload" href="app.js" />
-  <link rel="modulepreload" href="js/taskList/seed.js" />
-  <link rel="modulepreload" href="js/menu/sideMenu.js" />
-  <link rel="modulepreload" href="js/observer.js" />
-  <link rel="modulepreload" href="js/views/viewController.js" />
-  <link rel="modulepreload" href="js/theme.js" />
-  <link rel="modulepreload" href="js/comps/dialog.js" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      media="print"
+      onload="this.media = 'all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      />
+    </noscript>
+    <noscript>
+      <link rel="stylesheet" href="./css/dashboard.css" />
+      <link rel="stylesheet" href="./css/tasks.css" />
+      <link rel="stylesheet" href="./css/contacts.css" />
+    </noscript>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
-    media="print" onload="this.media='all'" />
-  <noscript>
-    <link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
-  </noscript>
-  <noscript>
-    <link rel="stylesheet" href="css/dashboard.css" />
-    <link rel="stylesheet" href="css/tasks.css" />
-    <link rel="stylesheet" href="css/contacts.css" />
-  </noscript>
+    <!-- vendor scripts (html5-qrcode, qrcode) are lazy-loaded by contactsView.js -->
+    <script defer type="module" src="./app.js"></script>
 
-  <!-- vendor scripts (html5-qrcode, qrcode) are lazy-loaded by contactsView.js -->
-  <script defer type="module" src="app.js"></script>
+    <script>
+      (function () {
+        const savedTheme = localStorage.getItem("theme");
+        const darkTheme = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        if (savedTheme === "light") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
 
-  <script>
-    (function () {
-      const savedTheme = localStorage.getItem("theme");
-      const darkTheme = window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      ).matches;
-      if (savedTheme === "light") {
-        document.documentElement.setAttribute("data-theme", "dark");
-      } else {
-        document.documentElement.setAttribute("data-theme", "light");
+    <!-- Hide Material Symbols text until font loads to prevent late LCP swap -->
+    <style>
+      .material-symbols-rounded {
+        visibility: hidden;
       }
-    })();
-  </script>
 
-  <!-- Hide Material Symbols text until font loads to prevent late LCP swap -->
-  <style>
-    .material-symbols-rounded {
-      visibility: hidden;
-    }
+      .fonts-loaded .material-symbols-rounded {
+        visibility: visible;
+      }
+    </style>
+    <script>
+      document.fonts &&
+        document.fonts.ready.then(function () {
+          document.documentElement.classList.add("fonts-loaded");
+        });
+    </script>
+  </head>
 
-    .fonts-loaded .material-symbols-rounded {
-      visibility: visible;
-    }
-  </style>
-  <script>
-    document.fonts && document.fonts.ready.then(function () {
-      document.documentElement.classList.add('fonts-loaded');
-    });
-  </script>
-</head>
+  <body>
+    <!-- Front-end Toasts -->
+    <div
+      id="toast-container"
+      class="toast-container"
+      aria-live="polite"
+      role="region"
+      aria-label="Notifications"
+    ></div>
 
-<body>
-  <!-- Front-end Toasts -->
-  <div id="toast-container" class="toast-container" aria-live="polite" role="region" aria-label="Notifications"></div>
+    <main id="app">
+      <div
+        class="initial-loader"
+        aria-busy="true"
+        aria-label="Laddar applikation"
+      >
+        <style>
+          .initial-loader {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: system-ui, sans-serif;
+            color: #3b82f6;
+            font-size: 1.2rem;
+          }
 
-  <main id="app">
-    <div class="initial-loader" aria-busy="true" aria-label="Laddar applikation">
-      <style>
-        .initial-loader {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          font-family: system-ui, sans-serif;
-          color: #3b82f6;
-          font-size: 1.2rem;
-        }
+          .initial-loader .lcp-heading {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: inherit;
+          }
 
-        .initial-loader .lcp-heading {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 4px;
-          color: inherit;
-        }
-
-        .initial-loader .lcp-sub {
-          font-size: 0.95rem;
-          font-weight: 400;
-          margin-bottom: 16px;
-          color: inherit;
-          opacity: 0.7;
-        }
-      </style>
-      <h3 class="lcp-heading">Mitt Team – Uppgifter</h3>
-      <p class="lcp-sub">Dashboard</p>
-      Laddar...
-    </div>
-  </main>
-
-
-</body>
-
+          .initial-loader .lcp-sub {
+            font-size: 0.95rem;
+            font-weight: 400;
+            margin-bottom: 16px;
+            color: inherit;
+            opacity: 0.7;
+          }
+        </style>
+        <h3 class="lcp-heading">Mitt Team – Uppgifter</h3>
+        <p class="lcp-sub">Dashboard</p>
+        Laddar...
+      </div>
+    </main>
+  </body>
 </html>
