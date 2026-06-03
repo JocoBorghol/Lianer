@@ -56,7 +56,9 @@ describe("viewController", () => {
 
         expect(taskScreen).toHaveBeenCalledWith({
         taskService: service,
-        navigate: expect.any(Function)
+        navigate: expect.any(Function),
+        currentDate: expect.any(Date),
+        onNavigateDate: expect.any(Function)
         });
         expect(container.children.length).toBe(1);
     });

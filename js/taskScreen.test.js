@@ -75,7 +75,8 @@ describe("taskScreen component", () => {
     test("Renders Team view default", () => {
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
         expect(screen.tagName).toBe("MAIN");
 
@@ -95,7 +96,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Anna");
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const filterSelect = screen.querySelector(".taskFilterSelect");
@@ -112,7 +114,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Björn");
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const lists = screen.querySelectorAll(".mock-task-list");
@@ -125,7 +128,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Ingen");
         const screen = taskScreen({
     taskService: mockTaskService,
-    navigate: jest.fn()
+    navigate: jest.fn(),
+    currentDate: new Date()
 });
 
         const lists = screen.querySelectorAll(".mock-task-list");
@@ -137,7 +141,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Arkiv");
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const lists = screen.querySelectorAll(".mock-task-list");
@@ -148,7 +153,8 @@ describe("taskScreen component", () => {
     test("Updates view when filter changes", () => {
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
         const filterSelect = screen.querySelector(".taskFilterSelect");
 
@@ -164,7 +170,8 @@ describe("taskScreen component", () => {
     test("Multi-View buttons change the view mode", () => {
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         // Initially in Board view
@@ -198,7 +205,8 @@ describe("taskScreen component", () => {
 
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const emptyState = screen.querySelector(".empty-state-container");
