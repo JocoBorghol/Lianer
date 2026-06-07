@@ -560,6 +560,30 @@ dialog.nativeModalDialog {
     border-color: var(--accent-cyan);
 }
 
+/* ==========================================================================
+   DROPDOWN & SELECT RE-STYLING (Dark Mode Fix)
+   ========================================================================== */
+
+/* Styla själva select-boxen i inställningarna och uppgiftskort */
+select.settings-input.main-input,
+.assignedSelect {
+    background-color: var(--bg-element) !important;
+    color: var(--text-main) !important;
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    padding: 12px 20px;
+    cursor: pointer;
+}
+
+/* FIXAR DEN VITA BAKGRUNDEN: Detta styr den utfällbara listan */
+select.settings-input.main-input option,
+.assignedSelect option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    padding: 12px;
+}
+
+
 /* Modern Date & Time Picker Reskinning */
 input[type="time"].modalInput,
 input[type="date"].modalInput {
@@ -1135,6 +1159,7 @@ input[type="date"].modalInput::-webkit-calendar-picker-indicator:hover {
         gap: 10px;
     }
 }
+
 
 /* ==========================================================================
    7. SETTINGS ACTION CARD (Demo & Clear Buttons)

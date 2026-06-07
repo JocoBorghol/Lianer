@@ -9,6 +9,8 @@ describe("taskScreen component", () => {
         jest.resetModules();
         jest.clearAllMocks();
         localStorage.clear();
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-02-18'));
 
         const mockStorage = {
             loadState: jest.fn(),
@@ -66,10 +68,15 @@ describe("taskScreen component", () => {
         });
     });
 
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
     test("Renders Team view default", () => {
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
         expect(screen.tagName).toBe("MAIN");
 
@@ -89,7 +96,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Anna");
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const filterSelect = screen.querySelector(".taskFilterSelect");
@@ -106,7 +114,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Björn");
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const lists = screen.querySelectorAll(".mock-task-list");
@@ -119,7 +128,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Ingen");
         const screen = taskScreen({
     taskService: mockTaskService,
-    navigate: jest.fn()
+    navigate: jest.fn(),
+    currentDate: new Date()
 });
 
         const lists = screen.querySelectorAll(".mock-task-list");
@@ -131,7 +141,8 @@ describe("taskScreen component", () => {
         localStorage.setItem("taskViewFilter", "Arkiv");
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
 
         const lists = screen.querySelectorAll(".mock-task-list");
@@ -142,7 +153,8 @@ describe("taskScreen component", () => {
     test("Updates view when filter changes", () => {
         const screen = taskScreen({
             taskService: mockTaskService,
-            navigate: jest.fn()
+            navigate: jest.fn(),
+            currentDate: new Date()
         });
         const filterSelect = screen.querySelector(".taskFilterSelect");
 
@@ -153,5 +165,52 @@ describe("taskScreen component", () => {
 
         const lists = screen.querySelectorAll(".mock-task-list");
         expect(lists[0].textContent).toContain("Att göra - 1 tasks");
+    });
+
+    test("Multi-View buttons change the view mode", () => {
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn(),
+            currentDate: new Date()
+        });
+
+        // Initially in Board view
+        expect(screen.querySelector(".taskBoard")).not.toBeNull();
+        
+        const toggleBtns = screen.querySelectorAll(".view-toggle-btn");
+        expect(toggleBtns.length).toBe(3);
+
+        // Click Vecka
+        const weekBtn = Array.from(toggleBtns).find(btn => btn.textContent.includes("Vecka"));
+        weekBtn.click();
+        expect(localStorage.getItem("taskViewMode")).toBe("week");
+        expect(screen.querySelector(".week-view-grid")).not.toBeNull();
+
+        // Click Dag
+        const dayBtn = Array.from(toggleBtns).find(btn => btn.textContent.includes("Dag"));
+        dayBtn.click();
+        expect(localStorage.getItem("taskViewMode")).toBe("day");
+        expect(screen.querySelector(".day-view-wrapper")).not.toBeNull();
+
+        // Click Board again
+        const boardBtn = Array.from(toggleBtns).find(btn => btn.textContent.includes("Board"));
+        boardBtn.click();
+        expect(localStorage.getItem("taskViewMode")).toBe("board");
+        expect(screen.querySelector(".taskBoard")).not.toBeNull();
+    });
+
+    test("Shows Welcome Overlay with Slide11.jpg when no tasks exist", () => {
+        // Mock empty tasks
+        mockTaskService.getTasks.mockReturnValue([]);
+
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn(),
+            currentDate: new Date()
+        });
+
+        const emptyState = screen.querySelector(".empty-state-container");
+        expect(emptyState).not.toBeNull();
+        expect(emptyState.innerHTML).toContain("Slide11.jpg");
     });
 });

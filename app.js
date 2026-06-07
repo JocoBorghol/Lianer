@@ -5,7 +5,7 @@ import { openTaskDialog } from "./js/menu/openTaskDialog.js";
 import { maybeShowWelcomeOverlay } from "./js/comps/welcomeOverlay.js";
 
 import { initSeed } from "./js/taskList/seed.js";
-import { TaskRepo } from "./js/repo/taskRepo.js";
+import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
 import { ViewController } from "./js/views/viewController.js";
 
@@ -104,7 +104,7 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
       /** @type {ServiceWorkerRegistration} */
-      const registration = await navigator.serviceWorker.register("/K3---Projekt-i-team/service-worker.js");
+      const registration = await navigator.serviceWorker.register("./service-worker.js", { scope: "/Lianer/" });
       console.log("Service Worker registered");
 
       // Vänta tills service workern är aktiv

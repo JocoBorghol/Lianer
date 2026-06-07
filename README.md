@@ -10,11 +10,11 @@
 
 <p align="center">
   <br />
-  <a href="https://alexanderjson.github.io/K3---Projekt-i-team/">
+  <a href="https://jocoborghol.github.io/Lianer/">
     <img src="https://img.shields.io/badge/TRY_IT_LIVE-Visit_Application-brightgreen?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo">
   </a>
   <br />
-  <sub>Don't feel like reading? <strong><a href="https://alexanderjson.github.io/K3---Projekt-i-team/">Jump straight into the app!</a></strong></sub>
+  <sub>Don't feel like reading? <strong><a href="https://jocoborghol.github.io/Lianer/">Jump straight into the app!</a></strong></sub>
 </p>
 
 ---
@@ -105,7 +105,7 @@ To run this project locally, follow the steps below.
    You can specify a custom folder name if you wish:
 
    ```bash
-   git clone https://github.com/AlexanderJson/K3---Projekt-i-team.git [your-folder-name]
+   git clone https://github.com/JocoBorghol/Lianer.git [your-folder-name]
    ```
 
 2. **Navigate to the directory**
@@ -178,7 +178,7 @@ We use **GitHub Actions** to automate our testing pipeline. On every `push` and 
 The project is publicly available and deployed via GitHub Pages.
 
 <p align="center">
-  <a href="https://alexanderjson.github.io/K3---Projekt-i-team/">
+  <a href="https://jocoborghol.github.io/Lianer/">
     Visit Live Application
   </a>
 </p>

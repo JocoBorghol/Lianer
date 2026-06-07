@@ -6,7 +6,11 @@ import { jest } from '@jest/globals';
 import { screen, fireEvent, within } from '@testing-library/dom';
 import '@testing-library/jest-dom';
 
-// Setup mocks MUST occur before imports
+// VIKTIGT: Sätt systemtiden innan moduler importeras för att undvika Mars-felet
+jest.useFakeTimers();
+jest.setSystemTime(new Date('2026-02-18T12:00:00Z'));
+
+// Setup mocks MUST occur before dynamic imports
 jest.unstable_mockModule('../js/storage.js', () => ({
     loadState: jest.fn(() => ({
         tasks: [
@@ -98,13 +102,18 @@ describe("renderCalendar DOM Component", () => {
         container = document.createElement('div');
         container.id = 'app';
         document.body.appendChild(container);
-        jest.useFakeTimers();
-        jest.setSystemTime(new Date('2026-02-18T12:00:00Z')); // Mock current date to Feb 18, 2026
+        
+        // Återställ tiden till februari inför varje testfall
+        jest.setSystemTime(new Date('2026-02-18T12:00:00Z'));
         jest.clearAllMocks();
     });
 
     afterEach(() => {
         document.body.innerHTML = '';
+    });
+
+    // Cleanup timers after all tests in this block
+    afterAll(() => {
         jest.useRealTimers();
     });
 
@@ -113,19 +122,16 @@ describe("renderCalendar DOM Component", () => {
         renderCalendar(container);
 
         const monthLabel = container.querySelector('.calendar-month-label');
+        // Förväntat: "Februari 2026" pga fryst tid
         expect(monthLabel).toHaveTextContent('Februari 2026');
 
-        // Check weekdays
         expect(screen.getByText('Mån')).toBeInTheDocument();
         expect(screen.getByText('Sön')).toBeInTheDocument();
 
-        // Check if day 17 and 18 render tasks
-        // Task 1 on 17th
         expect(screen.getByText('Task 1')).toBeInTheDocument();
-        // Task 2 and Mathing on 18th
         expect(screen.getByText('Task 2')).toBeInTheDocument();
         expect(screen.getByText('Task 3')).toBeInTheDocument();
-        expect(screen.getByText('Meeting')).toBeInTheDocument(); // Imported event
+        expect(screen.getByText('Meeting')).toBeInTheDocument(); 
     });
 
     test("navigation buttons change the month", () => {
@@ -153,17 +159,13 @@ describe("renderCalendar DOM Component", () => {
         renderCalendar(container);
 
         const filterSelect = screen.getByLabelText('Filtrera kalender per teammedlem');
-
-        // Change filter to Alex
         fireEvent.change(filterSelect, { target: { value: 'Alex' } });
 
-        // Task 1 is assigned to Alex, Task 2 to Sarah
         expect(screen.getByText('Task 1')).toBeInTheDocument();
         expect(screen.queryByText('Task 2')).not.toBeInTheDocument();
-        expect(screen.getByText('Meeting')).toBeInTheDocument(); // iCal events shouldn't be filtered out normally, wait, calendarView does not filter iCal events.
+        expect(screen.getByText('Meeting')).toBeInTheDocument(); 
         expect(mockAria.announceMessage).toHaveBeenCalledWith('Filtrerar: Alex');
 
-        // Reset filter
         fireEvent.change(filterSelect, { target: { value: 'Alla' } });
     });
 
@@ -171,7 +173,6 @@ describe("renderCalendar DOM Component", () => {
         window.innerWidth = 1024;
         renderCalendar(container);
 
-        // Click on cell for Feb 18
         const cells = document.querySelectorAll('.calendar-day');
         const cell18 = Array.from(cells).find(c => c.querySelector('.day-number')?.textContent === '18' && !c.classList.contains('other-month'));
 
@@ -180,14 +181,12 @@ describe("renderCalendar DOM Component", () => {
         const popup = screen.getByRole('dialog', { name: /Uppgifter 18 Februari/i });
         expect(popup).toBeInTheDocument();
 
-        // Inside popup
         const tasksInPopup = within(popup).getAllByRole('button');
-        expect(tasksInPopup.length).toBe(4); // 1 Close Btn + Task 2, Task 3, Meeting
+        expect(tasksInPopup.length).toBe(4); 
 
-        // Click task inside popup
-        fireEvent.click(tasksInPopup[1]); // Click Task 2 (index 1 because 0 is Close)
+        fireEvent.click(tasksInPopup[1]); 
         expect(mockDialog.addTaskDialog).toHaveBeenCalled();
-        expect(popup).not.toBeInTheDocument(); // Popup should close
+        expect(popup).not.toBeInTheDocument(); 
     });
 
     test("clicking external event in day popup opens detail modal", () => {
@@ -203,7 +202,6 @@ describe("renderCalendar DOM Component", () => {
 
         fireEvent.click(eventLi);
 
-        // Detail Modal opens
         const detailModal = screen.getByRole('dialog', { name: /Händelsedetaljer: Meeting/i });
         expect(detailModal).toBeInTheDocument();
         expect(within(detailModal).getByText('10:00 – 11:00')).toBeInTheDocument();
@@ -215,18 +213,16 @@ describe("renderCalendar DOM Component", () => {
     });
 
     test("agenda view renders on mobile", () => {
-        window.innerWidth = 500; // Trigger isMobile()
+        window.innerWidth = 500; 
         renderCalendar(container);
 
         const agenda = screen.getByRole('list', { name: /Agenda/i });
         expect(agenda).toBeInTheDocument();
 
-        // 17th and 18th have items
         expect(screen.getByText('17 Februari')).toBeInTheDocument();
         expect(screen.getByText('18 Februari')).toBeInTheDocument();
-        expect(screen.getByText('IDAG')).toBeInTheDocument(); // 18th is today
+        expect(screen.getByText('IDAG')).toBeInTheDocument(); 
 
-        // Click agenda item
         const agendaItem = screen.getByLabelText('Redigera: Task 1');
         fireEvent.click(agendaItem);
         expect(mockDialog.addTaskDialog).toHaveBeenCalled();
@@ -239,12 +235,7 @@ describe("renderCalendar DOM Component", () => {
         file.text = jest.fn(() => Promise.resolve('BEGIN:VCALENDAR\nEND:VCALENDAR'));
 
         const input = container.querySelector('input[type="file"]');
-
-        // Simulating the onchange directly is tricky with files in JSDOM, let's trigger it manually or via fireEvent
-        // testing-library user-event upload is better but we can mock target files
-        Object.defineProperty(input, 'files', {
-            value: [file]
-        });
+        Object.defineProperty(input, 'files', { value: [file] });
         await fireEvent.change(input);
 
         expect(mockIcal.parseICS).toHaveBeenCalled();
@@ -253,7 +244,6 @@ describe("renderCalendar DOM Component", () => {
     });
 
     test("iCal import with empty events alerts user", async () => {
-        // mock return empty
         mockIcal.parseICS.mockReturnValueOnce([]);
         global.alert = jest.fn();
 
@@ -263,9 +253,7 @@ describe("renderCalendar DOM Component", () => {
         const emptyFile = new File([''], 'empty.ics');
         emptyFile.text = jest.fn(() => Promise.resolve(''));
 
-        Object.defineProperty(input, 'files', {
-            value: [emptyFile]
-        });
+        Object.defineProperty(input, 'files', { value: [emptyFile] });
         await fireEvent.change(input);
 
         expect(global.alert).toHaveBeenCalledWith("Inga händelser hittades i filen.");
@@ -287,13 +275,9 @@ describe("renderCalendar DOM Component", () => {
     });
 
     test("status classes are checked via badge rendering", () => {
-        window.innerWidth = 1024; // Ensure desktop grid view!
-        const d = new Date();
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
-        const todayStr = `${yyyy}-${mm}-${dd}`;
-        const dayNum = String(d.getDate());
+        window.innerWidth = 1024; 
+        const todayStr = '2026-02-18';
+        const dayNum = '18';
 
         mockStorage.loadState.mockReturnValueOnce({
             tasks: [
@@ -306,18 +290,16 @@ describe("renderCalendar DOM Component", () => {
         renderCalendar(container);
         const cells = container.querySelectorAll('.calendar-day');
         const cellToday = Array.from(cells).find(c => c.querySelector('.day-number')?.textContent === dayNum && !c.classList.contains('other-month'));
-        fireEvent.click(cellToday); // open popup
+        fireEvent.click(cellToday); 
 
         const popup = screen.getByRole('dialog');
         const dots = popup.querySelectorAll('.legend-dot');
-        // Contains cal-todo, cal-progress, cal-done, and one without these classes
         expect(Array.from(dots).map(d => d.className)).toContain('legend-dot cal-todo');
         expect(Array.from(dots).map(d => d.className)).toContain('legend-dot cal-progress');
         expect(Array.from(dots).map(d => d.className)).toContain('legend-dot cal-done');
     });
 
     test("sets focus on specific element if focusId provided", () => {
-        // Need to test that it tries to focus if focusId is passed
         renderCalendar(container, "cal-team-filter");
         expect(document.activeElement.id).toBe("cal-team-filter");
     });

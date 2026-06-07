@@ -181,6 +181,9 @@ async function build() {
     if (fs.existsSync(path.join(__dirname, 'icons'))) {
         copyDirSync(path.join(__dirname, 'icons'), path.join(distDir, 'icons'));
     }
+    if (fs.existsSync(path.join(__dirname, 'docs'))) {
+        copyDirSync(path.join(__dirname, 'docs'), path.join(distDir, 'docs'));
+    }
 
     console.log('Build completed successfully!');
 }

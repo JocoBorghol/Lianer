@@ -142,6 +142,38 @@ describe("settingsView", () => {
         expect(memberRows.length).toBe(3);
     });
 
+    test("Allows adding and then deleting a specific team member", () => {
+        renderSettings(container, rerenderCallback, mockTaskService);
+
+        // Add
+        const addMemberBtn = container.querySelector(".btn-add-full");
+        addMemberBtn.click();
+
+        let memberRows = container.querySelectorAll(".member-row input");
+        expect(memberRows.length).toBe(3); // Anna, Björn, +new
+        
+        // Type a name
+        const newMemberInput = memberRows[2];
+        newMemberInput.value = "Kalle";
+
+        // Find the newly added delete button
+        const rowDivs = container.querySelectorAll(".member-row");
+        const deleteBtn = rowDivs[2].querySelector(".btn-delete-small");
+        
+        // Delete
+        deleteBtn.click();
+        
+        memberRows = container.querySelectorAll(".member-row input");
+        expect(memberRows.length).toBe(2); // Back to 2
+        
+        // Save to verify Kalle is not saved
+        const saveBtn = container.querySelector(".btn-save-main");
+        saveBtn.click();
+        const savedState = saveState.mock.calls[0][0];
+        expect(savedState.people).not.toContain("Kalle");
+        saveState.mockClear();
+    });
+
     test("Allows deleting a member", () => {
         renderSettings(container, rerenderCallback, mockTaskService);
 
@@ -182,6 +214,26 @@ describe("settingsView", () => {
         cancelBtn.click();
 
         expect(window.confirm).toHaveBeenCalled();
+        expect(rerenderCallback).toHaveBeenCalled();
+    });
+
+    test("Loads Butiken (ica) Demo", async () => {
+        renderSettings(container, rerenderCallback, mockTaskService);
+        const demoSelect = container.querySelector("select");
+        demoSelect.value = "ica";
+        const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
+        await loadBtn.click();
+        expect(loadDemoByKey).toHaveBeenCalledWith("ica", mockTaskService);
+        expect(rerenderCallback).toHaveBeenCalled();
+    });
+
+    test("Loads Fastighetsmäklare (realestate) Demo", async () => {
+        renderSettings(container, rerenderCallback, mockTaskService);
+        const demoSelect = container.querySelector("select");
+        demoSelect.value = "realestate";
+        const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
+        await loadBtn.click();
+        expect(loadDemoByKey).toHaveBeenCalledWith("realestate", mockTaskService);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 

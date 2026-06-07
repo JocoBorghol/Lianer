@@ -40,11 +40,16 @@ describe("listItem component", () => {
         };
         const mockView = { setView: jest.fn() };
         const mockStatus = { TASK_STATUSES };
+        const mockPeopleService = { getPeople: jest.fn().mockReturnValue(["Anna Svensson", "Lars Ove", "Someone Else"]) };
 
         jest.unstable_mockModule("../js/storage.js", () => mockStorage);
         jest.unstable_mockModule("../js/comps/dialog.js", () => mockDialog);
         jest.unstable_mockModule("../js/views/viewController.js", () => mockView);
         jest.unstable_mockModule("../js/status.js", () => mockStatus);
+        jest.unstable_mockModule("../js/people/peopleService.js", () => mockPeopleService);
+
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date('2026-02-18'));
 
         const module = await import("./taskList/listItem.js");
         listItem = module.listItem;
@@ -54,6 +59,7 @@ describe("listItem component", () => {
 
     afterEach(() => {
         mockWindowDispatchEvent.mockRestore();
+        jest.useRealTimers();
     });
 
     test("Renders a basic task item", () => {
@@ -220,5 +226,34 @@ describe("listItem component", () => {
 
         const overdueItem = el.querySelector(".deadline-overdue");
         expect(overdueItem).not.toBeNull();
+    });
+
+    test("Renders task with time intervals (Start and End time)", () => {
+        const task = { 
+            id: 3, 
+            status: "Att göra", 
+            taskTime: { start: "09:00", end: "10:30" } 
+        };
+        const el = listItem(task);
+        
+        const timeGroup = el.querySelector('div[aria-label*="Tid:"]');
+        expect(timeGroup).not.toBeNull();
+        expect(timeGroup.textContent).toContain("09:00");
+    });
+
+    test("Renders members as badges (initials) instead of full names", () => {
+        const task = { 
+            id: 4, 
+            status: "Att göra", 
+            assignedTo: ["Anna Svensson", "Lars Ove"] 
+        };
+        const el = listItem(task);
+
+        const avatars = el.querySelectorAll(".assignee-avatar-circle");
+        expect(avatars.length).toBe(2);
+        // Anna Svensson -> 'AS'
+        expect(avatars[0].textContent).toBe("AS"); 
+        // Lars Ove -> 'LO'
+        expect(avatars[1].textContent).toBe("LO");
     });
 });

@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import jestAxe from "jest-axe";
-import { addTaskDialog } from "../js/comps/dialog.js";
 import { listItem } from "./taskList/listItem.js";
 import { jest } from '@jest/globals';
 

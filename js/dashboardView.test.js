@@ -1,7 +1,5 @@
 import { jest } from '@jest/globals';
-import { waitFor, fireEvent } from '@testing-library/dom';
 
-const flushPromises = () => new Promise(process.nextTick);
 const flushAllPromises = async () => {
     for (let i = 0; i < 10; i++) await new Promise(process.nextTick);
 };
@@ -147,7 +145,6 @@ describe("dashboardView", () => {
         await renderDashboard(container);
         await flushAllPromises();
 
-        const statusGroup = container.querySelector(".status-group"); // First one is Veckomål
         const secondGroup = container.querySelectorAll(".status-group")[1]; // Att göra
 
         const toggle = secondGroup.querySelector(".status-toggle");
