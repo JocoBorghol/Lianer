@@ -25,7 +25,7 @@ function toDateStr(d) {
 
 /** Renders the week-view: 7 day columns */
 // Uppdaterad: Använder viewDate för att visa rätt vecka
-function renderWeekView(tasks, viewDate) {
+function renderWeekView(tasks, viewDate, taskService) {
   const grid = document.createElement("div");
   grid.className = "week-view-grid";
   grid.setAttribute("role", "region");
@@ -70,8 +70,8 @@ function renderWeekView(tasks, viewDate) {
         chip.className = `week-task-chip week-chip-${t.status.replace(/\s/g,'').toLowerCase()}${t.priority === "Hög" ? " week-chip-high" : ""}`;
         chip.setAttribute("role", "button"); chip.setAttribute("tabindex", "0");
         chip.innerHTML = `${t.taskTime ? `<span class="week-task-time">${t.taskType === "Möte" ? "📅" : "🕐"} ${timeLabel}</span>` : ""}<span class="week-task-title">${t.title}</span>${t.priority === "Hög" ? "<span class='week-prio-dot'>🔴</span>" : ""}`;
-        chip.onclick = () => addTaskDialog(t);
-        chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addTaskDialog(t); } };
+        chip.onclick = () => openTaskDialog({ taskService, taskToEdit: t });
+        chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDialog({ taskService, taskToEdit: t }); } };
         col.append(chip);
       });
     }
@@ -82,7 +82,7 @@ function renderWeekView(tasks, viewDate) {
 
 /** Renders the day-view: 24h axis for a specific date */
 // Uppdaterad: Använder viewDate för planeringen
-function renderDayView(tasks, viewDate) {
+function renderDayView(tasks, viewDate, taskService) {
   const wrapper = document.createElement("div");
 
   wrapper.className = "day-view-wrapper";
@@ -117,8 +117,8 @@ function renderDayView(tasks, viewDate) {
       chip.className = `day-allday-chip day-chip-${t.status.replace(/\s/g,'').toLowerCase()}${t.priority === "Hög" ? " day-chip-high" : ""}`;
       chip.setAttribute("role", "button"); chip.setAttribute("tabindex", "0");
       chip.textContent = t.title;
-      chip.onclick = () => addTaskDialog(t);
-      chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addTaskDialog(t); } };
+      chip.onclick = () => openTaskDialog({ taskService, taskToEdit: t });
+      chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDialog({ taskService, taskToEdit: t }); } };
       allDayBand.append(chip);
     });
     wrapper.append(allDayBand);
@@ -140,17 +140,56 @@ function renderDayView(tasks, viewDate) {
     line.className = "day-hour-line";
 
     const hourTasks = timedTasks.filter(t => {
-      const start = t.taskTime?.start || (typeof t.taskTime === "string" ? t.taskTime : "");
+      const start = t.taskTime?.start || (typeof t.taskTime === "string" ? t.taskTime.split('-')[0].trim() : "");
       return start && parseInt(start.split(':')[0]) === h;
     });
-    hourTasks.forEach(t => {
+
+    hourTasks.forEach((t, index) => {
       const chip = document.createElement("div");
+      
+      // Calculate start and end times
+      let startTime = t.taskTime?.start || t.taskTime;
+      let endTime = t.taskTime?.end || "";
+      if (typeof t.taskTime === "string" && t.taskTime.includes("-")) {
+         [startTime, endTime] = t.taskTime.split("-").map(s => s.trim());
+      }
+      
+      const startParts = startTime.split(":");
+      const startMin = startParts.length > 1 ? parseInt(startParts[1]) : 0;
+      
+      let durationMins = 50; // default duration
+      if (endTime) {
+         const endParts = endTime.split(":");
+         const endH = parseInt(endParts[0]);
+         const endM = endParts.length > 1 ? parseInt(endParts[1]) : 0;
+         durationMins = (endH * 60 + endM) - (h * 60 + startMin);
+         if (durationMins < 30) durationMins = 30; // min height
+      }
+
       const timeLabel = formatTaskTime(t.taskTime);
       chip.className = `day-timed-chip day-chip-${t.status.replace(/\s/g,'').toLowerCase()}${t.priority === "Hög" ? " day-chip-high" : ""}${t.taskType === "Möte" ? " day-chip-meeting" : ""}`;
-      chip.setAttribute("role", "button"); chip.setAttribute("tabindex", "0");
-      chip.innerHTML = `<span class="day-chip-time">${t.taskType === "Möte" ? "📅" : "🕐"} ${timeLabel}</span><span class="day-chip-title">${t.title}</span>${t.priority === "Hög" ? "<span style='color:#ff4d4d;margin-left:auto;font-size:12px;'>🔴</span>" : ""}`;
-      chip.onclick = () => addTaskDialog(t);
-      chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addTaskDialog(t); } };
+      
+      // Absolute positioning mapping 1 min = 1 px
+      chip.style.top = `${startMin}px`;
+      chip.style.height = `${durationMins}px`;
+      
+      // Prevent overlaps by offsetting them simply
+      chip.style.left = `${(index * 150) + 10}px`;
+      chip.style.width = "260px";
+
+      chip.setAttribute("role", "button"); 
+      chip.setAttribute("tabindex", "0");
+      
+      chip.innerHTML = `
+        <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
+            <span class="day-chip-time">${t.taskType === "Möte" ? "📅" : "🕐"} ${timeLabel}</span>
+            <span class="day-chip-title" style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.title}</span>
+            ${t.priority === "Hög" ? "<span style='color:#ff4d4d;font-size:12px;flex-shrink:0;'>🔴</span>" : ""}
+        </div>
+      `;
+      
+      chip.onclick = () => openTaskDialog({ taskService, taskToEdit: t });
+      chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDialog({ taskService, taskToEdit: t }); } };
       line.append(chip);
     });
     row.append(line);
@@ -312,7 +351,7 @@ export const taskScreen = ({ taskService, navigate, currentDate, onNavigateDate 
       const filteredTasks = selectedFilter === "Team"
         ? tasks
         : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
-      contentArea.append(renderWeekView(filteredTasks, currentDate));
+      contentArea.append(renderWeekView(filteredTasks, currentDate, taskService));
       return;
     }
 
@@ -321,7 +360,7 @@ export const taskScreen = ({ taskService, navigate, currentDate, onNavigateDate 
       const filteredTasks = selectedFilter === "Team"
         ? tasks
         : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
-      contentArea.append(renderDayView(filteredTasks, currentDate));
+      contentArea.append(renderDayView(filteredTasks, currentDate, taskService));
       return;
     }
 
