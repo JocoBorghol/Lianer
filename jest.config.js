@@ -9,7 +9,8 @@ export default {
     "/node_modules/",
     "/dist/",
     "/docs/",
-    "/js/api/dev/"
+    "/js/api/dev/",
+    "/js/api/e2e/"
   ],
 
   coveragePathIgnorePatterns: [
