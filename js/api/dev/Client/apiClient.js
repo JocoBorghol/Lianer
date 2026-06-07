@@ -1,4 +1,4 @@
-import { AppConfig } from "../../config/appConfig.js";
+import { AppConfig } from "../../../config/appConfig.js";
 import { getToken } from "../Security/tokenStore.js";
 
 function getApiTarget(target) {

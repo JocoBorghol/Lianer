@@ -1,4 +1,4 @@
-import { userApi } from "../Endpoints/userApi.js";
+import { userApi } from "./Endpoints/userApi.js";
 
 export async function smokeTestCreateUser() {
     const unique = Date.now();

@@ -1,4 +1,4 @@
-import { AppConfig } from "../../config/appConfig.js";
+import { AppConfig } from "../../../config/appConfig.js";
 
 /*
     DEV ONLY token store. All logic to save and use

@@ -1,4 +1,4 @@
-import { AppConfig } from "../../config/appConfig.js";
+import { AppConfig } from "../../../config/appConfig.js";
 
 /*
     Exports all endpoints for our API, 
