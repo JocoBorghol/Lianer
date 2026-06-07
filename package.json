@@ -10,7 +10,8 @@
     "serve": "http-server . -p 8080 -g",
     "lighthouse": "lhci autorun",
     "build": "node build.js",
-    "serve:dist": "http-server dist -p 8080 -g"
+    "serve:dist": "http-server dist -p 8080 -g",
+    "test:e2e:api": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.e2e.config.js js/api/e2e/coreApiFlow.e2e.test.js --runInBand --coverage=false"
   },
   "repository": {
     "type": "git",

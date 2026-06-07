@@ -4,18 +4,23 @@ export default {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
+
   testPathIgnorePatterns: [
     "/node_modules/",
     "/dist/",
     "/docs/",
-    "/js/api/dev/"
+    "/js/api/dev/",
+    "/js/api/e2e/"
   ],
+
   coveragePathIgnorePatterns: [
     "/node_modules/",
     "/dist/",
     "/docs/",
-    "/js/api/dev/"
+    "/js/api/dev/",
+    "/js/api/e2e/"
   ],
+
   setupFilesAfterEnv: ["./jest.setup.js"],
   coverageReporters: ["text", "text-summary"],
 
@@ -32,6 +37,7 @@ export default {
     "!js/people/**",
     "!js/repo/**",
     "!js/api/dev/**",
+    "!js/api/e2e/**",
     "!**/node_modules/**",
     "!**/dist/**",
     "!**/docs/**"
