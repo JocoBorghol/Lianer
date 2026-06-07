@@ -3,13 +3,14 @@ import { subscribe } from "./js/observer.js";
 import { initTheme } from "./js/theme.js";
 import { openTaskDialog } from "./js/menu/openTaskDialog.js";
 import { maybeShowWelcomeOverlay } from "./js/comps/welcomeOverlay.js";
-
+import { renderAuthView } from "./js/views/authView.js";
 import { initSeed } from "./js/taskList/seed.js";
 import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
 import { ViewController } from "./js/views/viewController.js";
 import { smokeTestCreateUser } from "./js/api/dev/userSmokeTest.js";
- /**
+
+/**
  * @file app.js
  * @description Huvudentrépunkt för Lianer Project Management App.
  * Hanterar initiering av tema, layoutstruktur och globala händelselyssnare.
@@ -18,85 +19,119 @@ import { smokeTestCreateUser } from "./js/api/dev/userSmokeTest.js";
 // Initiera tema (Mörkt/Ljust)
 initTheme();
 
-
-// Initirar våra instanser
-const taskRepo = new TaskRepo();
-const taskService = new TaskService(taskRepo);
-taskService.init();
-
-
 /** @type {HTMLElement} - Huvudcontainern definierad i index.html */
 const app = document.getElementById("app");
-app.classList.add("app");
 
-/** * Sidomeny (Navigation)
- * @description Använder <aside> och role="navigation" för att markera sektionen som sekundärt innehåll/navigering.
- * @type {HTMLElement}
- */
-const sideMenuDiv = document.createElement("aside");
-sideMenuDiv.classList.add("left");
-sideMenuDiv.setAttribute("role", "navigation");
-sideMenuDiv.setAttribute("aria-label", "Huvudmeny");
+let appHasStarted = false;
+
 window.lianerSmokeTests = Object.freeze({
-    smokeTestCreateUser
+  smokeTestCreateUser
 });
 
-/** * Huvudinnehåll (Main)
- * @description Använder <main> för att markera applikationens centrala innehåll, vilket är kritiskt för tillgänglighet.
- * @type {HTMLElement}
- */
-const mainContent = document.createElement("main");
-mainContent.classList.add("center");
-mainContent.setAttribute("id", "main-content");
+/*
+  Phase 1:
+  Visa login/register UI först.
+  Vi kopplar API-auth i nästa fas.
+*/
+showAuthScreen();
 
-/**
- * Initiera vyn-hanteraren och koppla den till huvudytan.
- */
-const viewController = new ViewController(mainContent,taskService);
-const sideMenu = menu({
-  navigate:(view,params) => viewController.setView(view, params),
-  onAddTask: () => openTaskDialog({taskService})
-});
-sideMenuDiv.append(sideMenu);
+window.addEventListener("authFormSubmitted", (event) => {
+  console.log("Auth form submitted:", event.detail);
 
-
-/**
- * Initiera startdata och sätt startvyn till dashboard.
- * IMPORTANT: subscribe() must come AFTER initSeed + setView to avoid
- * double-render. initSeed→saveState→notify would trigger rerenderActiveView
- * before setView runs, rendering the dashboard twice.
- */
-initSeed();
-
-// Bygg ihop applikationens grundstruktur atomiskt
-app.replaceChildren(sideMenuDiv, mainContent);
-
-viewController.setView("dashboard");
-
-// Register observer AFTER initial render to prevent double-render
-subscribe(() => viewController.rerender());
-
-// Show first-time welcome overlay (checks localStorage internally)
-maybeShowWelcomeOverlay(taskService);
-
-// Handle navigation events dispatched by overlay quick-start pills
-window.addEventListener("navigateTo", (e) => {
-  const view = e.detail;
-  if (view) viewController.setView(view);
+  // Phase 1: no real API auth yet.
+  // We enter the app when the UI form is submitted.
+  startApplicationShell();
 });
 
-/**
- * Global händelselyssnare för interaktioner.
- * Hanterar bland annat öppning av dialogrutan för att lägga till nya uppgifter (FAB).
- * * @param {MouseEvent} e - Klickhändelsen.
- */
-document.addEventListener("click", (e) => {
-  /** @type {Element|null} - Hittar närmaste element med klassen .addTaskFab */
-  const fabButton = e.target.closest(".addTaskFab");
-  if (fabButton) {
-    openTaskDialog({taskService});
+function showAuthScreen() {
+  app.className = "";
+  app.replaceChildren(renderAuthView());
+}
+
+function startApplicationShell() {
+  if (appHasStarted) {
+    return;
   }
-});
+
+  appHasStarted = true;
+
+  app.classList.add("app");
+
+  // Initirar våra instanser
+  const taskRepo = new TaskRepo();
+  const taskService = new TaskService(taskRepo);
+  taskService.init();
+
+  /**
+   * Sidomeny (Navigation)
+   * @description Använder <aside> och role="navigation" för att markera sektionen som sekundärt innehåll/navigering.
+   * @type {HTMLElement}
+   */
+  const sideMenuDiv = document.createElement("aside");
+  sideMenuDiv.classList.add("left");
+  sideMenuDiv.setAttribute("role", "navigation");
+  sideMenuDiv.setAttribute("aria-label", "Huvudmeny");
+
+  /**
+   * Huvudinnehåll (Main)
+   * @description Använder <main> för att markera applikationens centrala innehåll, vilket är kritiskt för tillgänglighet.
+   * @type {HTMLElement}
+   */
+  const mainContent = document.createElement("main");
+  mainContent.classList.add("center");
+  mainContent.setAttribute("id", "main-content");
+
+  /**
+   * Initiera vyn-hanteraren och koppla den till huvudytan.
+   */
+  const viewController = new ViewController(mainContent, taskService);
+
+  const sideMenu = menu({
+    navigate: (view, params) => viewController.setView(view, params),
+    onAddTask: () => openTaskDialog({ taskService })
+  });
+
+  sideMenuDiv.append(sideMenu);
+
+  /**
+   * Initiera startdata och sätt startvyn till dashboard.
+   * IMPORTANT: subscribe() must come AFTER initSeed + setView to avoid
+   * double-render. initSeed→saveState→notify would trigger rerenderActiveView
+   * before setView runs, rendering the dashboard twice.
+   */
+  initSeed();
+
+  // Bygg ihop applikationens grundstruktur atomiskt
+  app.replaceChildren(sideMenuDiv, mainContent);
+
+  viewController.setView("dashboard");
+
+  // Register observer AFTER initial render to prevent double-render
+  subscribe(() => viewController.rerender());
+
+  // Show first-time welcome overlay after auth screen has been submitted
+  maybeShowWelcomeOverlay(taskService);
+
+  // Handle navigation events dispatched by overlay quick-start pills
+  window.addEventListener("navigateTo", (e) => {
+    const view = e.detail;
+    if (view) viewController.setView(view);
+  });
+
+  /**
+   * Global händelselyssnare för interaktioner.
+   * Hanterar bland annat öppning av dialogrutan för att lägga till nya uppgifter (FAB).
+   * @param {MouseEvent} e - Klickhändelsen.
+   */
+  document.addEventListener("click", (e) => {
+    /** @type {Element|null} - Hittar närmaste element med klassen .addTaskFab */
+    const fabButton = e.target.closest(".addTaskFab");
+
+    if (fabButton) {
+      openTaskDialog({ taskService });
+    }
+  });
+}
 
 /**
  * Service Worker och Background Sync registrering.
@@ -135,22 +170,24 @@ if ("serviceWorker" in navigator) {
  */
 let deferredPrompt;
 
-window.addEventListener('beforeinstallprompt', (e) => {
+window.addEventListener("beforeinstallprompt", (e) => {
   // Förhindra att webbläsaren visar sin standardprompt
   e.preventDefault();
+
   // Spara eventet så att det kan triggas senare via en egen knapp.
   window.deferredPrompt = e;
   deferredPrompt = e;
 
   // Visa endast om användaren inte redan har klickat "Senare"
-  if (localStorage.getItem('pwa-prompt-dismissed') === 'true') {
+  if (localStorage.getItem("pwa-prompt-dismissed") === "true") {
     return;
   }
 
   // Skapa en installationsbanner om den inte redan finns
-  if (!document.getElementById('pwa-install-banner')) {
-    const banner = document.createElement('div');
-    banner.id = 'pwa-install-banner';
+  if (!document.getElementById("pwa-install-banner")) {
+    const banner = document.createElement("div");
+    banner.id = "pwa-install-banner";
+
     // Inline styling för bannern
     banner.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-card, #fff); color: var(--text-main, #333); box-shadow: 0 -4px 15px rgba(0,0,0,0.15); position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; border-top: 1px solid var(--border, #eee); animation: slideUp 0.3s ease-out;">
@@ -167,36 +204,45 @@ window.addEventListener('beforeinstallprompt', (e) => {
         </div>
       </div>
     `;
+
     document.body.appendChild(banner);
 
-    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+    document.getElementById("pwa-install-btn").addEventListener("click", async () => {
       // Göm bannern
-      banner.style.display = 'none';
+      banner.style.display = "none";
+
       // Visa webbläsarens installationsprompt
       deferredPrompt.prompt();
+
       // Vänta på användarens val
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`Lianer: Användaren valde att ${outcome === 'accepted' ? 'installera' : 'avvisa'} PWA.`);
+
+      console.log(`Lianer: Användaren valde att ${outcome === "accepted" ? "installera" : "avvisa"} PWA.`);
+
       deferredPrompt = null;
       window.deferredPrompt = null;
     });
 
-    document.getElementById('pwa-install-dismiss').addEventListener('click', () => {
+    document.getElementById("pwa-install-dismiss").addEventListener("click", () => {
       // Spara i LocalStorage att användaren avvisat prompten
-      localStorage.setItem('pwa-prompt-dismissed', 'true');
+      localStorage.setItem("pwa-prompt-dismissed", "true");
+
       // Göm bannern om användaren klickar "Senare"
-      banner.style.display = 'none';
+      banner.style.display = "none";
     });
   }
 });
 
-window.addEventListener('appinstalled', () => {
+window.addEventListener("appinstalled", () => {
   // Rensa deferredPrompt och göm eventuell banner
   deferredPrompt = null;
   window.deferredPrompt = null;
-  console.log('Lianer: PWA installerades framgångsrikt');
-  const banner = document.getElementById('pwa-install-banner');
+
+  console.log("Lianer: PWA installerades framgångsrikt");
+
+  const banner = document.getElementById("pwa-install-banner");
+
   if (banner) {
-    banner.style.display = 'none';
+    banner.style.display = "none";
   }
 });
