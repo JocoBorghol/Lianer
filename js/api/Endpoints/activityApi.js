@@ -2,7 +2,7 @@
     Endpoints for Activity controller
 */
 
-
+/*
 // GET activities by user ID
 // api/v1/activities/user/{id}
 fetch('http://localhost:5297/api/v1/activities/user/123e4567-e89b-12d3-a456-426614174000?currentPage=1&pageSize=1', {
@@ -139,3 +139,5 @@ fetch('http://localhost:5297/api/v1/activities?currentPage=1&pageSize=1', {
     "status": 1
   }
 ]
+
+*/

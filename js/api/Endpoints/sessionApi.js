@@ -2,7 +2,7 @@
     Endpoints for Sessions controller
 */
 
-
+/*
 // POST login session
 // api/v1/sessions
 fetch('http://localhost:5297/api/v1/sessions', {
@@ -84,3 +84,5 @@ fetch('http://localhost:5297/api/v1/sessions/google/url', {
 // Status: 200
 // No Body
 // OK
+
+*/

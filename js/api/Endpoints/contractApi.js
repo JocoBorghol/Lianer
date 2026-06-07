@@ -2,7 +2,7 @@
     Endpoints for Contacts controller
 */
 
-
+/*
 // GET contact by ID
 // api/v1/contacts/{id}
 fetch('http://localhost:5297/api/v1/contacts/123e4567-e89b-12d3-a456-426614174000', {
@@ -115,3 +115,5 @@ fetch('http://localhost:5297/api/v1/contacts/123e4567-e89b-12d3-a456-42661417400
 // Status: 204
 // No Body
 // No Content
+
+*/

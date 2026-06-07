@@ -1,7 +1,7 @@
 /*
     Endpoints for Notes controller
 */
-
+/*
 
 //GET 
 // api/v1/activities/{activityId}/notes​
@@ -99,3 +99,4 @@ fetch('http://localhost:5297/api/v1/activities/123e4567-e89b-12d3-a456-426614174
   }
 })
 
+*/

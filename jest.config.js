@@ -4,11 +4,21 @@ export default {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
-  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/docs/"],
-  coveragePathIgnorePatterns: ["/node_modules/", "/dist/", "/docs/"],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/dist/",
+    "/docs/",
+    "/js/api/dev/"
+  ],
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/dist/",
+    "/docs/",
+    "/js/api/dev/"
+  ],
   setupFilesAfterEnv: ["./jest.setup.js"],
   coverageReporters: ["text", "text-summary"],
-  
+
   // Vi ignorerar filer som inte är logik-tunga för att få en rättvisande bild
   collectCoverageFrom: [
     "js/**/*.js",
@@ -21,6 +31,7 @@ export default {
     "!js/menu/**",
     "!js/people/**",
     "!js/repo/**",
+    "!js/api/dev/**",
     "!**/node_modules/**",
     "!**/dist/**",
     "!**/docs/**"
