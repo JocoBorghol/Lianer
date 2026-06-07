@@ -1,19 +1,20 @@
 import { AppConfig } from "../../config/appConfig.js";
 import { getToken } from "../Security/tokenStore.js";
 
-const API_TARGETS = Object.freeze({
-    core: AppConfig.api.coreBaseUrl,
-    features: AppConfig.api.featuresBaseUrl
-});
+function getApiTarget(target) {
+    const t = AppConfig.api.targets[target];
+    if(!t || !t.baseUrl)
+    {
+        throw new Error(`Api targets missing or unknownl..!`);
+    }
+    return t;
+}
 
 export async function apiRequest(target,path,options ={}){
-    const baseUrl = API_TARGETS[target];
+    const targetConfig = getApiTarget(target);
+    const url = `${targetConfig.baseUrl}${path}`;
 
-    if (!baseUrl) {
-        throw new Error(`Unknown API target: ${target}`);
-    }
 
-    const url = `${baseUrl}${path}`;
 
     const headers = {
         "Content-Type": "application/json",

@@ -25,7 +25,9 @@ function normalizeApiVersion(version) {
 
 const apiVersion = normalizeApiVersion(config.api.apiVersion);
 export const AppConfig = Object.freeze({
-    ...config,
+    ...config, //creates shallow copy
+    // also replaces apiversion in copy with a normalized /api/version to use in our endpounts'
+    
     api:Object.freeze({
         ...config.api,
         apiVersion,

@@ -8,7 +8,7 @@ import { initSeed } from "./js/taskList/seed.js";
 import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
 import { ViewController } from "./js/views/viewController.js";
-
+import { smokeTestCreateUser } from "./js/api/dev/userSmokeTest.js";
  /**
  * @file app.js
  * @description Huvudentrépunkt för Lianer Project Management App.
@@ -37,7 +37,9 @@ const sideMenuDiv = document.createElement("aside");
 sideMenuDiv.classList.add("left");
 sideMenuDiv.setAttribute("role", "navigation");
 sideMenuDiv.setAttribute("aria-label", "Huvudmeny");
-
+window.lianerSmokeTests = Object.freeze({
+    smokeTestCreateUser
+});
 
 /** * Huvudinnehåll (Main)
  * @description Använder <main> för att markera applikationens centrala innehåll, vilket är kritiskt för tillgänglighet.
