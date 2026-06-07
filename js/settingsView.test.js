@@ -1,22 +1,25 @@
 import { jest } from '@jest/globals';
-import { waitFor, fireEvent } from '@testing-library/dom';
+import { fireEvent } from '@testing-library/dom';
 
 const flushPromises = () => new Promise(process.nextTick);
 
 let renderSettings;
 let loadState, saveState;
 let notify;
-let loadDemoWorkspace, loadDemoLIA;
+let loadDemoByKey;
 let clearAllContacts, initContactsDB, getAllContacts, importContacts;
 let showToast;
 
 describe("settingsView", () => {
     let container;
     let rerenderCallback;
+    let mockTaskService;
 
     beforeEach(async () => {
         container = document.createElement("div");
         document.body.appendChild(container);
+        
+        mockTaskService = { fake: true };
 
         rerenderCallback = jest.fn();
 
@@ -33,8 +36,7 @@ describe("settingsView", () => {
         };
 
         const mockSeed = {
-            loadDemoWorkspace: jest.fn(),
-            loadDemoLIA: jest.fn()
+            loadDemoByKey: jest.fn()
         };
 
         const mockContactsDb = {
@@ -48,20 +50,19 @@ describe("settingsView", () => {
             showToast: jest.fn()
         };
 
-        jest.unstable_mockModule("../js/storage.js", () => mockStorage);
-        jest.unstable_mockModule("../js/observer.js", () => mockObserver);
-        jest.unstable_mockModule("../js/taskList/seed.js", () => mockSeed);
-        jest.unstable_mockModule("../js/utils/contactsDb.js", () => mockContactsDb);
-        jest.unstable_mockModule("../js/utils/toast.js", () => mockToast);
+        jest.unstable_mockModule("./storage.js", () => mockStorage);
+        jest.unstable_mockModule("./observer.js", () => mockObserver);
+        jest.unstable_mockModule("./taskList/seed.js", () => mockSeed);
+        jest.unstable_mockModule("./utils/contactsDb.js", () => mockContactsDb);
+        jest.unstable_mockModule("./utils/toast.js", () => mockToast);
 
-        const view = await import("../js/views/settingsView.js");
+        const view = await import("./views/settingsView.js");
         renderSettings = view.renderSettings;
 
         loadState = mockStorage.loadState;
         saveState = mockStorage.saveState;
         notify = mockObserver.notify;
-        loadDemoWorkspace = mockSeed.loadDemoWorkspace;
-        loadDemoLIA = mockSeed.loadDemoLIA;
+        loadDemoByKey = mockSeed.loadDemoByKey;
         clearAllContacts = mockContactsDb.clearAllContacts;
         initContactsDB = mockContactsDb.initContactsDB;
         getAllContacts = mockContactsDb.getAllContacts;
@@ -78,6 +79,8 @@ describe("settingsView", () => {
             }
         });
 
+
+
         // Mock global fetch or window methods if needed
         window.alert = jest.fn();
         window.confirm = jest.fn().mockReturnValue(true);
@@ -90,7 +93,7 @@ describe("settingsView", () => {
     });
 
     test("Renders settings with current state", () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         expect(loadState).toHaveBeenCalled();
         const teamNameInput = container.querySelector("#teamNameInput");
@@ -102,8 +105,35 @@ describe("settingsView", () => {
         expect(memberRows[1].value).toBe("Björn");
     });
 
+    test("Cancels import if user declines confirm", async () => 
+    {
+        renderSettings(container, rerenderCallback, mockTaskService);
+        window.confirm = jest.fn().mockReturnValue(false);
+        const input = container.querySelector("input[type='file']");
+        const jsonStr = JSON.stringify({ state: {} });
+        const file = new File([jsonStr], "backup.json", { type: "application/json" });
+        file.text = jest.fn().mockResolvedValue(jsonStr);
+        await fireEvent.change(input, {target: {files: [file]}});
+        await flushPromises();
+        expect(saveState).not.toHaveBeenCalled();
+    });
+
+    test("Show toast if permission granted", async () => 
+    {
+        renderSettings(container, rerenderCallback, mockTaskService);
+        const buttons = Array.from(container.querySelectorAll(".btn-load-demo"));
+        const testBtn = buttons.find(b => b.textContent.includes("Testa Notis"));
+        window.Notification = { permission: "denied"};
+        testBtn.click();
+        await flushPromises();
+        expect(showToast).toHaveBeenCalledWith(
+            "Kan ej skicka",
+            "Vänligen aktivera notiser via knappen ovan först."
+        );
+    })
+
     test("Allows adding a new member", () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const addMemberBtn = container.querySelector(".btn-add-full");
         addMemberBtn.click();
@@ -113,7 +143,7 @@ describe("settingsView", () => {
     });
 
     test("Allows deleting a member", () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const deleteBtns = container.querySelectorAll(".btn-delete-small");
         expect(deleteBtns.length).toBe(2);
@@ -126,7 +156,7 @@ describe("settingsView", () => {
     });
 
     test("Saves settings correctly", () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         // Change team name
         container.querySelector("#teamNameInput").value = "New Team";
@@ -146,7 +176,7 @@ describe("settingsView", () => {
     });
 
     test("Cancels settings changes", () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const cancelBtn = container.querySelector(".btn-cancel-main");
         cancelBtn.click();
@@ -156,31 +186,33 @@ describe("settingsView", () => {
     });
 
     test("Loads Workspace Demo", async () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
-        const buttons = Array.from(container.querySelectorAll(".btn-load-demo"));
-        const wsBtn = buttons.find(b => b.textContent.includes("Demo Workspace"));
+        const demoSelect = container.querySelector("select");
+        demoSelect.value = "tech";
+        
+        const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
+        await loadBtn.click();
 
-        await wsBtn.click();
-
-        expect(loadDemoWorkspace).toHaveBeenCalled();
+        expect(loadDemoByKey).toHaveBeenCalledWith("tech", mockTaskService);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 
     test("Loads LIA Demo", async () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
-        const buttons = Array.from(container.querySelectorAll(".btn-load-demo"));
-        const liaBtn = buttons.find(b => b.textContent.includes("Demo LIA"));
+        const demoSelect = container.querySelector("select");
+        demoSelect.value = "lia";
+        
+        const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
+        await loadBtn.click();
 
-        await liaBtn.click();
-
-        expect(loadDemoLIA).toHaveBeenCalled();
+        expect(loadDemoByKey).toHaveBeenCalledWith("lia", mockTaskService);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 
     test("Exports backup properly", async () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         getAllContacts.mockResolvedValue([{ id: 1, name: "Test Contact" }]);
 
@@ -198,7 +230,7 @@ describe("settingsView", () => {
     });
 
     test("Imports backup properly", async () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const input = container.querySelector("input[type='file']");
         const jsonStr = JSON.stringify({ state: { settings: { teamName: "Imported" } }, contacts: [] });
@@ -217,7 +249,7 @@ describe("settingsView", () => {
     });
 
     test("Deletes all data", async () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const clearBtn = container.querySelector(".btn-clear-all");
 
@@ -237,7 +269,7 @@ describe("settingsView", () => {
     });
 
     test("Requests notification permission", async () => {
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const buttons = Array.from(container.querySelectorAll(".btn-load-demo"));
         const enableBtn = buttons.find(b => b.textContent.includes("Aktivera Notiser"));
@@ -261,7 +293,7 @@ describe("settingsView", () => {
 
     test("Sends test notification via fallback if no SW", async () => {
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
-        renderSettings(container, rerenderCallback);
+        renderSettings(container, rerenderCallback, mockTaskService);
 
         const buttons = Array.from(container.querySelectorAll(".btn-load-demo"));
         const testBtn = buttons.find(b => b.textContent.includes("Testa Notis"));

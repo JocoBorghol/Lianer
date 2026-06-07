@@ -1,9 +1,9 @@
 import { jest } from '@jest/globals';
-import { waitFor, fireEvent } from '@testing-library/dom';
+
 
 let taskScreen;
 let loadState;
-
+let mockTaskService;
 describe("taskScreen component", () => {
     beforeEach(async () => {
         jest.resetModules();
@@ -11,7 +11,15 @@ describe("taskScreen component", () => {
         localStorage.clear();
 
         const mockStorage = {
-            loadState: jest.fn()
+            loadState: jest.fn(),
+            saveState: jest.fn()
+        };
+        mockTaskService = {
+            getTasks: jest.fn(() => loadState.mock.results[0]?.value?.tasks || []),
+            _compareRank: jest.fn(() => 0),
+            moveTask: jest.fn(),
+            changeStatus: jest.fn(),
+            deleteTask: jest.fn()
         };
 
         const mockTaskList = {
@@ -24,9 +32,11 @@ describe("taskScreen component", () => {
             })
         };
 
-        jest.unstable_mockModule("../js/storage.js", () => mockStorage);
-        jest.unstable_mockModule("../js/taskList/taskList.js", () => mockTaskList);
-
+        jest.unstable_mockModule("./storage.js", () => mockStorage);
+        jest.unstable_mockModule("./taskList/taskList.js", () => mockTaskList);
+        jest.unstable_mockModule("./menu/openTaskDialog.js", () => ({
+            openTaskDialog: jest.fn()
+        }));
         // Provide the constants from status.js directly or mock it
         const mockStatus = {
             TASK_STATUSES: {
@@ -36,9 +46,9 @@ describe("taskScreen component", () => {
                 CLOSED: "Stängd"
             }
         };
-        jest.unstable_mockModule("../js/status.js", () => mockStatus);
+        jest.unstable_mockModule("./status.js", () => mockStatus);
 
-        const module = await import("../js/taskList/taskScreen.js");
+        const module = await import("./taskList/taskScreen.js");
         taskScreen = module.taskScreen;
         loadState = mockStorage.loadState;
 
@@ -57,7 +67,10 @@ describe("taskScreen component", () => {
     });
 
     test("Renders Team view default", () => {
-        const screen = taskScreen();
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn()
+        });
         expect(screen.tagName).toBe("MAIN");
 
         const filterSelect = screen.querySelector(".taskFilterSelect");
@@ -74,7 +87,10 @@ describe("taskScreen component", () => {
 
     test("Filters by specific person", () => {
         localStorage.setItem("taskViewFilter", "Anna");
-        const screen = taskScreen();
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn()
+        });
 
         const filterSelect = screen.querySelector(".taskFilterSelect");
         expect(filterSelect.value).toBe("Anna");
@@ -88,7 +104,10 @@ describe("taskScreen component", () => {
 
     test("Filters by old format person", () => {
         localStorage.setItem("taskViewFilter", "Björn");
-        const screen = taskScreen();
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn()
+        });
 
         const lists = screen.querySelectorAll(".mock-task-list");
         // T2 has assignedTo: ["Björn"], T5 has assigned: "Björn"
@@ -98,7 +117,10 @@ describe("taskScreen component", () => {
 
     test("Filters by Ingen (Unassigned)", () => {
         localStorage.setItem("taskViewFilter", "Ingen");
-        const screen = taskScreen();
+        const screen = taskScreen({
+    taskService: mockTaskService,
+    navigate: jest.fn()
+});
 
         const lists = screen.querySelectorAll(".mock-task-list");
         // Only T3 is Ingen
@@ -107,7 +129,10 @@ describe("taskScreen component", () => {
 
     test("Renders Archive view", () => {
         localStorage.setItem("taskViewFilter", "Arkiv");
-        const screen = taskScreen();
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn()
+        });
 
         const lists = screen.querySelectorAll(".mock-task-list");
         expect(lists.length).toBe(1); // Only CLOSED column
@@ -115,7 +140,10 @@ describe("taskScreen component", () => {
     });
 
     test("Updates view when filter changes", () => {
-        const screen = taskScreen();
+        const screen = taskScreen({
+            taskService: mockTaskService,
+            navigate: jest.fn()
+        });
         const filterSelect = screen.querySelector(".taskFilterSelect");
 
         filterSelect.value = "Anna";

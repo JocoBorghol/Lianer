@@ -11,10 +11,15 @@ describe("taskList component", () => {
 
         const mockListItem = {
             listItem: jest.fn(task => {
-                const div = document.createElement("div");
-                div.className = "mock-list-item";
-                div.textContent = task.title;
-                return div;
+            const div = document.createElement("div");
+            div.className = "listItem";
+
+            const title = document.createElement("h3");
+            title.className = "taskTitle";
+            title.textContent = task.title;
+
+            div.appendChild(title);
+            return div;
             })
         };
 
@@ -40,10 +45,12 @@ describe("taskList component", () => {
         expect(header.textContent).toContain("2"); // count
 
         // Items
-        const items = element.querySelectorAll(".mock-list-item");
+        const items = element.querySelectorAll(".listItem");
         expect(items.length).toBe(2);
-        expect(items[0].textContent).toBe("Task 1");
+        expect(items[0].querySelector(".taskTitle").textContent).toBe("Task 1");
     });
+
+    
 
     test("Renders empty state", () => {
         const element = taskList("Pågår", []);
@@ -92,4 +99,64 @@ describe("taskList component", () => {
         expect(localStorage.getItem("column_state_Att göra")).toBe("expanded");
         expect(localStorage.getItem("column_count_Att göra")).toBe("1");
     });
+
+    test("createListActions wrappers test", async () => {
+        const onEditTask = jest.fn();
+        const onMoveTask = jest.fn();
+        const onChangeStatus = jest.fn();
+        const onDeleteTask = jest.fn();
+        const navigate = jest.fn();
+        jest.resetModules();
+        jest.clearAllMocks();
+        const mockListItem = jest.fn(() => document.createElement("div"));
+
+        jest.unstable_mockModule("../js/taskList/listItem.js", () => ({
+            listItem: mockListItem,
+                }
+            )
+        );
+        const {  taskList } = await import("../js/taskList/taskList.js");
+        taskList("Att göra", [{id:1}], {
+            navigate,
+            onEditTask,
+            onMoveTask,
+            onChangeStatus,
+            onDeleteTask, 
+        });
+        const actions = mockListItem.mock.calls[0][1];
+
+        actions.onNavigate("contacts", { id: 1 });
+        actions.onEditTask({ id: 1 });
+        actions.onMoveTask(1, "up");
+        actions.onChangeStatus(1, "Klar");
+        actions.onDeleteTask({ id: 1 });
+        
+        expect(onEditTask).toHaveBeenCalled();
+        expect(onMoveTask).toHaveBeenCalled();
+        expect(onChangeStatus).toHaveBeenCalled();
+        expect(onDeleteTask).toHaveBeenCalled();
+
+    })
+
+      test("action wrappers call deps", () => {
+        const deps = {
+        navigate: jest.fn(),
+        onEditTask: jest.fn(),
+        onMoveTask: jest.fn(),
+        onChangeStatus: jest.fn(),
+        onDeleteTask: jest.fn(),
+        };
+        taskList("Att göra", [{ id: 1 }], deps);
+        deps.navigate("contacts", { highlightId: 1 });
+        deps.onEditTask({ id: 1 });
+        deps.onMoveTask(1, "up");
+        deps.onChangeStatus(1, "Klar");
+        deps.onDeleteTask({ id: 1 });
+
+        expect(deps.navigate).toHaveBeenCalled();
+        expect(deps.onEditTask).toHaveBeenCalled();
+        expect(deps.onMoveTask).toHaveBeenCalled();
+        expect(deps.onChangeStatus).toHaveBeenCalled();
+        expect(deps.onDeleteTask).toHaveBeenCalled();
+  });
 });

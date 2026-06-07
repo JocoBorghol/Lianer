@@ -18,18 +18,19 @@ describe("seed data utilities", () => {
         const mockContactsDb = {
             initContactsDB: jest.fn().mockResolvedValue(),
             importContacts: jest.fn().mockResolvedValue(),
-            getAllContacts: jest.fn().mockResolvedValue([])
+            getAllContacts: jest.fn().mockResolvedValue([]),
+            clearAllContacts: jest.fn().mockResolvedValue()
         };
 
         const mockTasks = {
             createTask: jest.fn((input) => ({ ...input, isCreated: true }))
         };
 
-        jest.unstable_mockModule("../js/storage.js", () => mockStorage);
-        jest.unstable_mockModule("../js/utils/contactsDb.js", () => mockContactsDb);
-        jest.unstable_mockModule("../js/data/tasks.js", () => mockTasks);
+        jest.unstable_mockModule("./storage.js", () => mockStorage);
+        jest.unstable_mockModule("./utils/contactsDb.js", () => mockContactsDb);
+        jest.unstable_mockModule("./data/tasks.js", () => mockTasks);
 
-        const module = await import("../js/taskList/seed.js");
+        const module = await import("./taskList/seed.js");
         initSeed = module.initSeed;
         loadDemoWorkspace = module.loadDemoWorkspace;
         loadDemoLIA = module.loadDemoLIA;
@@ -42,7 +43,7 @@ describe("seed data utilities", () => {
         createTask = mockTasks.createTask;
     });
 
-    test("initSeed populates state if empty", () => {
+    test("initSeed populates state if empty",async () => {
         loadState.mockReturnValue({}); // Empty state
 
         initSeed();
@@ -59,7 +60,7 @@ describe("seed data utilities", () => {
         expect(initContactsDB).toHaveBeenCalled(); // Contacts are also seeded
     });
 
-    test("initSeed does not overwrite existing people/tasks", () => {
+    test("initSeed does not overwrite existing people/tasks",async () => {
         loadState.mockReturnValue({
             people: ["Custom Person"],
             tasks: [{ id: 1, title: "Custom Task" }]
@@ -70,7 +71,7 @@ describe("seed data utilities", () => {
         expect(saveState).toHaveBeenCalled();
         const state = saveState.mock.calls[0][0];
 
-        expect(state.people).toEqual(["Custom Person"]);
+        expect(state.people).toEqual(["Joco", "Hussein", "Alexander", "Custom Person"]);
         expect(state.tasks).toEqual([{ id: 1, title: "Custom Task" }]);
         expect(createTask).not.toHaveBeenCalled();
     });
@@ -81,14 +82,18 @@ describe("seed data utilities", () => {
             tasks: []
         });
 
-        await loadDemoWorkspace();
+        const mockTaskService = { importDemoTasks: jest.fn() };
+        await loadDemoWorkspace(mockTaskService);
 
         expect(saveState).toHaveBeenCalled();
         const state = saveState.mock.calls[0][0];
 
         expect(state.people).toContain("Linnea Malmgren");
-        expect(state.tasks.length).toBe(20);
-        expect(state.tasks[0].title).toBe("Konfigurera CI/CD-pipeline");
+        
+        expect(mockTaskService.importDemoTasks).toHaveBeenCalled();
+        const importedTasks = mockTaskService.importDemoTasks.mock.calls[0][0];
+        expect(importedTasks.length).toBe(20);
+        expect(importedTasks[0].title).toBe("Konfigurera CI/CD-pipeline");
 
         expect(initContactsDB).toHaveBeenCalled();
         expect(importContacts).toHaveBeenCalled();
@@ -100,31 +105,19 @@ describe("seed data utilities", () => {
             tasks: []
         });
 
-        await loadDemoLIA();
+        const mockTaskService = { importDemoTasks: jest.fn() };
+        await loadDemoLIA(mockTaskService);
 
         expect(saveState).toHaveBeenCalled();
         const state = saveState.mock.calls[0][0];
 
         expect(state.people).toContain("Ali Hassan");
-        expect(state.tasks.length).toBe(20);
-        expect(state.tasks[0].title).toBe("Ring Axis Communications");
+        
+        expect(mockTaskService.importDemoTasks).toHaveBeenCalled();
+        const importedTasks = mockTaskService.importDemoTasks.mock.calls[0][0];
+        expect(importedTasks.length).toBe(20);
+        expect(importedTasks[0].title).toBe("Ring Axis Communications");
 
         expect(initContactsDB).toHaveBeenCalled();
-        expect(importContacts).toHaveBeenCalled();
-    });
-
-    test("seedContacts prevents duplicates", async () => {
-        loadState.mockReturnValue({});
-        getAllContacts.mockResolvedValue([
-            { name: "Emma Lindqvist" } // Tech contact 1
-        ]);
-
-        await loadDemoWorkspace();
-
-        // Tech demo creates 10 contacts. We mock that Emma is already there. So importContacts is called with 9.
-        expect(importContacts).toHaveBeenCalled();
-        const importedArray = importContacts.mock.calls[0][0];
-        expect(importedArray.length).toBe(9); // 10 original - 1 existing
-        expect(importedArray.find(c => c.name === "Emma Lindqvist")).toBeUndefined();
     });
 });

@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
-import { waitFor, fireEvent } from '@testing-library/dom';
+import { waitFor } from '@testing-library/dom';
 
 let listItem;
-let updateTaskStatus, removeById, loadState, saveState, addTaskDialog, setView;
+let addTaskDialog;
 let TASK_STATUSES;
 
 describe("listItem component", () => {
@@ -23,7 +23,6 @@ describe("listItem component", () => {
             CLOSED: "Stängd"
         };
 
-        const mockUpdateTaskStatus = { updateTaskStatus: jest.fn() };
         const mockStorage = {
             removeById: jest.fn(),
             loadState: jest.fn().mockReturnValue({
@@ -42,21 +41,15 @@ describe("listItem component", () => {
         const mockView = { setView: jest.fn() };
         const mockStatus = { TASK_STATUSES };
 
-        jest.unstable_mockModule("../js/taskList/updateTaskStatus.js", () => mockUpdateTaskStatus);
         jest.unstable_mockModule("../js/storage.js", () => mockStorage);
         jest.unstable_mockModule("../js/comps/dialog.js", () => mockDialog);
         jest.unstable_mockModule("../js/views/viewController.js", () => mockView);
         jest.unstable_mockModule("../js/status.js", () => mockStatus);
 
-        const module = await import("../js/taskList/listItem.js");
+        const module = await import("./taskList/listItem.js");
         listItem = module.listItem;
 
-        updateTaskStatus = mockUpdateTaskStatus.updateTaskStatus;
-        removeById = mockStorage.removeById;
-        loadState = mockStorage.loadState;
-        saveState = mockStorage.saveState;
         addTaskDialog = mockDialog.addTaskDialog;
-        setView = mockView.setView;
     });
 
     afterEach(() => {
@@ -72,9 +65,8 @@ describe("listItem component", () => {
         expect(el.querySelector(".taskDescription").textContent).toBe("Desc");
         expect(el.querySelector(".statusBadge").textContent).toBe("Att göra");
 
-        // Assigned avatars
         const avatar = el.querySelector(".assignee-avatar-circle");
-        expect(avatar.textContent).toBe("A"); // Initials for Anna
+        expect(avatar.textContent).toBe("A");  
     });
 
     test("Renders default values if fields missing", () => {
@@ -90,8 +82,9 @@ describe("listItem component", () => {
 
     test("Opens edit dialog when clicking avatar", () => {
         const task = { id: 1, status: "Att göra", assignedTo: ["Anna"] };
-        const el = listItem(task);
-
+        const el = listItem(task, {
+        onEditTask: addTaskDialog
+        });
         const avatarContainer = el.querySelector(".assignee-avatars-list");
         avatarContainer.click();
 
@@ -100,8 +93,10 @@ describe("listItem component", () => {
 
     test("Keyboard Enter/Space opens edit dialog on avatar", () => {
         const task = { id: 1, status: "Att göra", assignedTo: ["Anna"] };
-        const el = listItem(task);
-
+        const el = listItem(task, {
+        onEditTask: addTaskDialog
+        });
+                
         const avatarContainer = el.querySelector(".assignee-avatars-list");
         avatarContainer.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
@@ -113,69 +108,110 @@ describe("listItem component", () => {
 
     test("Moves task up and down within status", () => {
         const task = { id: 2, status: "Att göra" }; // task 2 is at index 1
-        const el = listItem(task);
+        const onMoveTask = jest.fn();
+        const el = listItem(task, { onMoveTask });
 
-        const controlBtns = el.querySelectorAll(".controlBtn");
-        const upBtn = Array.from(controlBtns).find(b => b.textContent && b.textContent.includes("↑"));
+        const upBtn = [...el.querySelectorAll(".controlBtn")]
+            .find(b => b.textContent.includes("↑"));
 
         upBtn.click();
-        expect(saveState).toHaveBeenCalled();
-        expect(mockWindowDispatchEvent).toHaveBeenCalled();
+
+        expect(onMoveTask).toHaveBeenCalledWith(2, "up");
     });
 
     test("Moves task status left and right", () => {
-        const task = { id: 1, status: "Pågår" };
-        const el = listItem(task);
+    const task = { id: 1, status: "Pågår" };
 
-        const controlBtns = el.querySelectorAll(".controlBtn");
-        const leftBtn = Array.from(controlBtns).find(b => b.textContent && b.textContent.includes("←"));
-        const rightBtn = Array.from(controlBtns).find(b => b.textContent && b.textContent.includes("→"));
+    const onChangeStatus = jest.fn();
 
-        leftBtn.click();
-        expect(updateTaskStatus).toHaveBeenCalledWith(1, "Att göra");
+    const el = listItem(task, { onChangeStatus });
 
-        rightBtn.click();
-        expect(updateTaskStatus).toHaveBeenCalledWith(1, "Klar");
+    const leftBtn = el.querySelector('button[aria-label="Flytta vänster"]');
+    const rightBtn = el.querySelector('button[aria-label="Flytta höger"]');
+
+    leftBtn.click();
+    expect(onChangeStatus).toHaveBeenCalledWith(1, "Att göra");
+
+    rightBtn.click();
+    expect(onChangeStatus).toHaveBeenCalledWith(1, "Klar");
     });
 
     test("Deletes task (for closed)", async () => {
         const task = { id: 1, status: "Stängd" };
-        const el = listItem(task);
+        const onDeleteTask = jest.fn();
+        const el = listItem(task, { onDeleteTask});
 
-        const deleteBtn = el.querySelector(".controlBtn.delete-btn");
+        const deleteBtn = el.querySelector('button[aria-label="Ta bort"]');
         deleteBtn.click();
 
         await waitFor(() => {
-            expect(removeById).toHaveBeenCalledWith(1);
+            expect(onDeleteTask).toHaveBeenCalledWith(task);
         });
     });
 
-    test("Closes task via prompt (for open)", async () => {
+    test("Delete button calls onDeleteTask (open)", () => {
         const task = { id: 1, status: "Att göra" };
-        const el = listItem(task);
+        const onDeleteTask = jest.fn();
 
-        const deleteBtn = el.querySelector(".controlBtn.delete-btn");
+        const el = listItem(task, { onDeleteTask });
+
+        const deleteBtn = el.querySelector('button[aria-label="Ta bort"]');
         deleteBtn.click();
 
-        await waitFor(() => {
-            expect(updateTaskStatus).toHaveBeenCalledWith(1, "Stängd", "Reason");
-        });
+        expect(onDeleteTask).toHaveBeenCalledWith(task);
     });
 
-    test("Renders explicit contact link and interacts", () => {
-        const task = { id: 1, status: "Att göra", contactId: 99, contactName: "Test Contact" };
-        const el = listItem(task);
+    test("formatDate handles special values correctly,", () => {
+        const el = listItem(
+            { status: "Att göra", createdAt: "Nyss" },
+            {}
+        );
+        expect(el.querySelector(".meta-value").textContent).toBe("Nyss");
+    });
 
-        const linkDiv = el.querySelector(".task-contact-explicit");
-        expect(linkDiv).not.toBeNull();
+        test("formatDate returns original if date is invalid,", () =>
+    {
+        const el = listItem(
+            { status: "Att göra", createdAt: "invalid" },
+            {}
+        );
+        expect(el.querySelector(".meta-value").textContent).toBe("invalid");
+    });
 
+    test("does not render contact link if missing", () => 
+        {
+        const el = listItem(
+            { status: "Att göra" },
+            {}
+        );
+
+        expect(el.querySelector(".task-contact-explicit")).toBeNull();
+        }
+    );
         // We have to mock the fact that it was created as a sibling to h3 and p inside the taskMainContent
         // The implementation appends to mainContent, unfortunately it doesn't give it a separate class 
         // Wait, it gave it the class "task-contact-explicit"
+  test("Renders explicit contact link and interacts", () => {
+    const task = {
+      id: 1,
+      status: "Att göra",
+      contactId: 99,
+      contactName: "Test Contact",
+    };
 
-        linkDiv.click();
-        expect(setView).toHaveBeenCalledWith("contacts", { highlightId: 99 });
+    const onNavigate = jest.fn();
+    const el = listItem(task, {
+        onNavigate,
+        onEditTask: jest.fn(),
     });
+
+    const linkDiv = el.querySelector(".task-contact-pill");
+    expect(linkDiv).not.toBeNull();
+
+    linkDiv.click();
+    
+    expect(onNavigate).toHaveBeenCalledWith("contacts", { highlightId: 99 });
+  });
 
     test("Formats deadline correctly and highlights overdue", () => {
         const pastDate = new Date(Date.now() - 86400000).toISOString();

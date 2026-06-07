@@ -21,6 +21,16 @@ describe("StateStore", () => {
     jest.clearAllMocks();
   });
 
+
+  test("load returns [] if storage contains empty string", () =>
+  {
+      localStorage.setItem("state", "");
+
+      const state = store.load();
+
+      expect(state).toEqual([]);
+  })
+
   test("load should return empty array if storage is empty", () => {
     const state = store.load();
     expect(state).toEqual([]);
