@@ -1,5 +1,5 @@
 import { AppConfig } from "../../config/appConfig.js";
-import { getToken } from "./tokenStore.js";
+import { getToken } from "../Security/tokenStore.js";
 
 const API_TARGETS = Object.freeze({
     core: AppConfig.api.coreBaseUrl,

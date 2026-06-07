@@ -1,5 +1,11 @@
 import { AppConfig } from "../../config/appConfig.js";
 
+/*
+    DEV ONLY token store. All logic to save and use
+    JWT-tokens
+*/
+
+
 export function saveToken(token) {
     if (!token || typeof token !== "string") {
         throw new Error("JWT token was invalid or missing. Nothing is saved.");

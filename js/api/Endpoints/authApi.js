@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient.js";
+import { apiRequest } from "../apiClient.js";
 // tillfälliga
 export async function createUser(firstName, lastName, email, password) {
     return await apiRequest("core", "/api/v1/users", { //todo
