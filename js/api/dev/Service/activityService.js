@@ -11,12 +11,11 @@ export class ActivityService{
 
     }
 
-
     async loadActivities(paging = {})
     {
         const response = await this.api.getAll(paging);
         this.activities.clear();
-        const data = Array.isArray(data) ? data : [];
+        const data = Array.isArray(response) ? response : [];
         data.forEach(activity=> {
             if (!activity || !activity.id) return;
             this.activities.set(activity.id, activity);
