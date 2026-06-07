@@ -9,13 +9,9 @@ function getApiTarget(target) {
     }
     return t;
 }
-
 export async function apiRequest(target,path,options ={}){
     const targetConfig = getApiTarget(target);
     const url = `${targetConfig.baseUrl}${path}`;
-
-
-
     const headers = {
         "Content-Type": "application/json",
         ...(options.headers ?? {})
@@ -52,7 +48,6 @@ export async function apiRequest(target,path,options ={}){
 
     return data;
 }
-
 async function readResponse(response) {
     if (response.status === 204) {
         return null;

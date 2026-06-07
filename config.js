@@ -18,7 +18,6 @@
  */
 (function configureRuntime(context){
     "use strict";
-
     /**
      * @type {boolean}
      * @description Whether the current frontend is running on localhost.

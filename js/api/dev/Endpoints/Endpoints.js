@@ -4,9 +4,7 @@ import { AppConfig } from "../../../config/appConfig.js";
     Exports all endpoints for our API, 
     use these to avoid hardcoded endpoints in all calls!
 */
-
 const API_BASE_PATH = AppConfig.api.apiBasePath;
-
 const Roots = Object.freeze({
     users: "/users",
     activities: "/activities",
