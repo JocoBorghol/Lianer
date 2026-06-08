@@ -62,23 +62,43 @@ export class TaskScreenViewModel {
         };
     }
 
-    getPeople() {
-        const names = this.#users
-            .map(user =>
-                user.fullName
-                ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-            )
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b, "sv-SE"));
 
-        return ["Ingen", ...names];
-    }
+    getPeople() 
+    {
+    return this.getAssignableUsers().map(user => user.fullName);
+    }   
 
     getTasks() {
         return this.#activityService
             .getActivities()
             .map((activity, index) => this.#toTaskCardShape(activity, index));
     }
+
+
+        getAssignableUsers() {
+            const users = this.#users
+                .map(user => {
+                    const id = user.userId ?? user.id ?? null;
+
+                    const fullName =
+                        user.fullName
+                        ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+
+                    if (!id || !fullName) return null;
+
+                    return {
+                        id,
+                        fullName
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.fullName.localeCompare(b.fullName, "sv-SE"));
+
+            return [
+                { id: null, fullName: "Ingen" },
+                ...users
+            ];
+        }
 
     getVisibleTasks(selectedFilter) {
         const tasks = this.getTasks();
@@ -103,9 +123,13 @@ getTaskServiceAdapter() {
     return {
         getTasks: () => this.getTasks(),
 
+        getPeople: () => this.getPeople(),
+
+        getAssignableUsers: () => this.getAssignableUsers(),
+
         getTaskById: (id) => {
             return this.getTasks().find(task => task.id === id) ?? null;
-        },
+        }, 
 
         _compareRank: (a = "", b = "") => {
             return String(a).localeCompare(String(b), "sv-SE", {
@@ -178,7 +202,7 @@ getTaskServiceAdapter() {
         },
 
         moveTask: () => {
-            // Later: real board ordering / sortKey.
+            // LTODO
             return null;
         },
 
@@ -234,6 +258,9 @@ getTaskServiceAdapter() {
 
             assigned: assignedName,
             assignedTo: assignedName === "Ingen" ? [] : [assignedName],
+
+            // Important: this is the real backend value.
+            assignedUserId: activity.assignedTo ?? null,
 
             completed: status === TASK_STATUSES.DONE || status === TASK_STATUSES.CLOSED,
 
@@ -375,69 +402,76 @@ getTaskServiceAdapter() {
     };
 }
 
-#getAssignedUserIdFromTask(task = {}) {
-    const assignedName =
-        task.assigned
-        ?? task.assignedTo?.find(name => name && name !== "Ingen")
-        ?? null;
+    #getAssignedUserIdFromTask(task = {}) {
+        if (task.assignedUserId !== undefined) {
+            return task.assignedUserId || null;
+        }
 
-    if (!assignedName || assignedName === "Ingen") {
-        return null;
+        if (task.assignedToId !== undefined) {
+            return task.assignedToId || null;
+        }
+
+        const assignedName =
+            task.assigned
+            ?? task.assignedTo?.find(name => name && name !== "Ingen")
+            ?? null;
+
+        if (!assignedName || assignedName === "Ingen") {
+            return null;
+        }
+
+        const user = this.#users.find(user => {
+            const fullName =
+                user.fullName
+                ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+
+            return fullName === assignedName;
+        });
+
+        return user?.userId ?? user?.id ?? null;
+    }
+    #toStartDateTime(task = {}) {
+        if (!task.deadline || task.deadline === 0) {
+            return null;
+        }
+
+        const startTime =
+            task.taskTime?.start
+            ?? (typeof task.taskTime === "string" ? task.taskTime : null)
+            ?? null;
+
+        if (!startTime) {
+            return null;
+        }
+
+        return this.#toIsoDateTime(task.deadline, startTime);
     }
 
-    const user = this.#users.find(user => {
-        const fullName =
-            user.fullName
-            ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+    #toEndDateTime(task = {}) {
+        if (!task.deadline || task.deadline === 0) {
+            return null;
+        }
 
-        return fullName === assignedName;
-    });
+        const endTime =
+            task.taskTime?.end
+            ?? null;
 
-    return user?.userId ?? user?.id ?? null;
-}
+        if (endTime) {
+            return this.#toIsoDateTime(task.deadline, endTime);
+        }
 
-#toStartDateTime(task = {}) {
-    if (!task.deadline || task.deadline === 0) {
-        return null;
+        return this.#toIsoDateTime(task.deadline, "12:00");
     }
 
-    const startTime =
-        task.taskTime?.start
-        ?? (typeof task.taskTime === "string" ? task.taskTime : null)
-        ?? null;
+    #toIsoDateTime(dateOnly, time) {
+        if (!dateOnly || !time) return null;
 
-    if (!startTime) {
-        return null;
+        const date = new Date(`${dateOnly}T${time}:00`);
+
+        if (Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        return date.toISOString();
     }
-
-    return this.#toIsoDateTime(task.deadline, startTime);
-}
-
-#toEndDateTime(task = {}) {
-    if (!task.deadline || task.deadline === 0) {
-        return null;
     }
-
-    const endTime =
-        task.taskTime?.end
-        ?? null;
-
-    if (endTime) {
-        return this.#toIsoDateTime(task.deadline, endTime);
-    }
-
-    return this.#toIsoDateTime(task.deadline, "12:00");
-}
-
-#toIsoDateTime(dateOnly, time) {
-    if (!dateOnly || !time) return null;
-
-    const date = new Date(`${dateOnly}T${time}:00`);
-
-    if (Number.isNaN(date.getTime())) {
-        return null;
-    }
-
-    return date.toISOString();
-}
-}
