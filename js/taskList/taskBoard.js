@@ -56,16 +56,17 @@ function createActiveBoard({ board, tasks, selectedFilter, taskService, navigate
     columnWrapper.append(taskList(status, columnTasks, {
       taskService,
       navigate,
-      onMoveTask: (id,dir) => {
-        taskService.moveTask(id,dir);
+      onMoveTask:  async (id,dir) => {
+        await taskService.moveTask(id,dir);
         dispatchRenderApp();
       },
-      onChangeStatus: (id, newStatus) => {
-        taskService.changeStatus(id, newStatus);
+      onChangeStatus: async (id, newStatus) => {
+        await taskService.changeStatus(id, newStatus);
         dispatchRenderApp();
       },
-      onDeleteTask: (task) => {
-        taskService.deleteTask(task.id);
+
+      onDeleteTask: async (task) => {
+        await taskService.deleteTask(task.id);
         dispatchRenderApp();
       },
       onEditTask: (task) => openTaskDialog({ taskService, taskToEdit: task }),
