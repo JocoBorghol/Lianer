@@ -5,8 +5,8 @@ on:
     branches: [ "main", "dev" ]
 
 jobs:
-  validate:
-    name: Build & Test
+  build:
+    name: build
     runs-on: ubuntu-latest
 
     steps:
