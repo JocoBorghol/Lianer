@@ -1,468 +1,146 @@
 import { loadState } from "../storage.js";
 import { TASK_STATUSES } from "../status.js";
-import { addTaskDialog } from "../comps/dialog.js";
 import { openTaskDialog } from "../menu/openTaskDialog.js";
 import { taskList } from "../taskList/taskList.js";
-import { formatTaskTime } from "../data/tasks.js";
-import { getWelcomeHTML, attachWelcomeEvents } from "../comps/welcomeOverlay.js";
+import { startOfWeekMonday, getWeekNumber } from "./dateHelpers.js";
+import { renderWeekView } from "./weekView.js";
+import { renderDayView } from "./dayView.js";
+import { createTaskFilterHeader } from "./taskFilterHeader.js";
+import { renderEmptyState } from "./emptyState.js";
+import { renderTaskBoard } from "./taskBoard.js";
 
-// ─── Date helper ───
-// Uppdaterad: Tar nu emot ett datum som bas för måndagen
-function startOfWeekMonday(baseDate = new Date()) {
-  const d = new Date(baseDate);
-  const day = d.getDay() || 7; // Sun=0 → 7
-  d.setDate(d.getDate() - day + 1);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-const DAYS_SV = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
-
-/** Format Date to YYYY-MM-DD */
-function toDateStr(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-/** Renders the week-view: 7 day columns */
-// Uppdaterad: Använder viewDate för att visa rätt vecka
-function renderWeekView(tasks, viewDate, taskService) {
-  const grid = document.createElement("div");
-  grid.className = "week-view-grid";
-  grid.setAttribute("role", "region");
-  grid.setAttribute("aria-label", "Veckovy");
-
-  const monday = startOfWeekMonday(viewDate);
-  const today = toDateStr(new Date());
-
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(monday);
-    day.setDate(monday.getDate() + i);
-    const dayStr = toDateStr(day);
-    const isToday = dayStr === today;
-
-    const col = document.createElement("div");
-    col.className = `week-day-col ${isToday ? "week-day-today" : ""}`;
-    col.setAttribute("aria-label", `${DAYS_SV[i]} ${dayStr}`);
-
-    const colHeader = document.createElement("div");
-    colHeader.className = "week-day-header";
-    colHeader.innerHTML = `<span class="week-day-name">${DAYS_SV[i]}</span><span class="week-day-date">${day.getDate()}/${day.getMonth() + 1}</span>`;
-    col.append(colHeader);
-
-    // Tasks whose deadline falls on this day
-    const dayTasks = tasks
-      .filter(t => t.deadline === dayStr && t.status !== TASK_STATUSES.CLOSED)
-      .sort((a, b) => {
-        const aStart = a.taskTime?.start || a.taskTime || "99:99";
-        const bStart = b.taskTime?.start || b.taskTime || "99:99";
-        return aStart.localeCompare(bStart);
-      });
-
-    if (dayTasks.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "week-day-empty";
-      empty.textContent = "Inga uppgifter";
-      col.append(empty);
-    } else {
-    dayTasks.forEach(t => {
-        const chip = document.createElement("div");
-        const timeLabel = formatTaskTime(t.taskTime);
-        chip.className = `week-task-chip week-chip-${t.status.replace(/\s/g,'').toLowerCase()}${t.priority === "Hög" ? " week-chip-high" : ""}`;
-        chip.setAttribute("role", "button"); chip.setAttribute("tabindex", "0");
-        chip.innerHTML = `${t.taskTime ? `<span class="week-task-time">${t.taskType === "Möte" ? "📅" : "🕐"} ${timeLabel}</span>` : ""}<span class="week-task-title">${t.title}</span>${t.priority === "Hög" ? "<span class='week-prio-dot'>🔴</span>" : ""}`;
-        chip.onclick = () => openTaskDialog({ taskService, taskToEdit: t });
-        chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDialog({ taskService, taskToEdit: t }); } };
-        col.append(chip);
-      });
-    }
-    grid.append(col);
-  }
-  return grid;
-}
-
-/** Renders the day-view: 24h axis for a specific date */
-// Uppdaterad: Använder viewDate för planeringen
-function renderDayView(tasks, viewDate, taskService) {
-  const wrapper = document.createElement("div");
-
-  wrapper.className = "day-view-wrapper";
-  wrapper.setAttribute("role", "region");
-  wrapper.setAttribute("aria-label", "Dagsvy");
-
-  const heading = document.createElement("h3");
-  heading.className = "day-view-heading";
-  heading.textContent = `Dagsplanering – ${viewDate.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}`;
-  wrapper.append(heading);
-
-  const viewDateStr = toDateStr(viewDate);
-  const activeTasks = tasks.filter(t => t.status !== TASK_STATUSES.CLOSED && t.deadline === viewDateStr);
-  const allDayTasks = activeTasks.filter(t => !t.taskTime);
-  // Sort timed tasks by start time
-  const timedTasks = activeTasks.filter(t => t.taskTime).sort((a, b) => {
-    const aS = a.taskTime?.start || (typeof a.taskTime==="string" ? a.taskTime : "");
-    const bS = b.taskTime?.start || (typeof b.taskTime==="string" ? b.taskTime : "");
-    return aS.localeCompare(bS);
-  });
-
-  // All-day band
-  if (allDayTasks.length > 0) {
-    const allDayBand = document.createElement("div");
-    allDayBand.className = "day-allday-band";
-    const bandLabel = document.createElement("span");
-    bandLabel.className = "day-allday-label";
-    bandLabel.textContent = "Hela dagen";
-    allDayBand.append(bandLabel);
-    allDayTasks.forEach(t => {
-      const chip = document.createElement("div");
-      chip.className = `day-allday-chip day-chip-${t.status.replace(/\s/g,'').toLowerCase()}${t.priority === "Hög" ? " day-chip-high" : ""}`;
-      chip.setAttribute("role", "button"); chip.setAttribute("tabindex", "0");
-      chip.textContent = t.title;
-      chip.onclick = () => openTaskDialog({ taskService, taskToEdit: t });
-      chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDialog({ taskService, taskToEdit: t }); } };
-      allDayBand.append(chip);
-    });
-    wrapper.append(allDayBand);
-  }
-
-  // Time axis
-  const axis = document.createElement("div");
-  axis.className = "day-time-axis";
-
-  // Render hour markers 6:00-23:00
-  for (let h = 6; h <= 23; h++) {
-    const row = document.createElement("div");
-    row.className = "day-hour-row";
-    const label = document.createElement("span");
-    label.className = "day-hour-label";
-    label.textContent = `${String(h).padStart(2,'0')}:00`;
-    row.append(label);
-    const line = document.createElement("div");
-    line.className = "day-hour-line";
-
-    const hourTasks = timedTasks.filter(t => {
-      const start = t.taskTime?.start || (typeof t.taskTime === "string" ? t.taskTime.split('-')[0].trim() : "");
-      return start && parseInt(start.split(':')[0]) === h;
-    });
-
-    hourTasks.forEach((t, index) => {
-      const chip = document.createElement("div");
-      
-      // Calculate start and end times
-      let startTime = t.taskTime?.start || t.taskTime;
-      let endTime = t.taskTime?.end || "";
-      if (typeof t.taskTime === "string" && t.taskTime.includes("-")) {
-         [startTime, endTime] = t.taskTime.split("-").map(s => s.trim());
-      }
-      
-      const startParts = startTime.split(":");
-      const startMin = startParts.length > 1 ? parseInt(startParts[1]) : 0;
-      
-      let durationMins = 50; // default duration
-      if (endTime) {
-         const endParts = endTime.split(":");
-         const endH = parseInt(endParts[0]);
-         const endM = endParts.length > 1 ? parseInt(endParts[1]) : 0;
-         durationMins = (endH * 60 + endM) - (h * 60 + startMin);
-         if (durationMins < 30) durationMins = 30; // min height
-      }
-
-      const timeLabel = formatTaskTime(t.taskTime);
-      chip.className = `day-timed-chip day-chip-${t.status.replace(/\s/g,'').toLowerCase()}${t.priority === "Hög" ? " day-chip-high" : ""}${t.taskType === "Möte" ? " day-chip-meeting" : ""}`;
-      
-      // Absolute positioning mapping 1 min = 1 px
-      chip.style.top = `${startMin}px`;
-      chip.style.height = `${durationMins}px`;
-      
-      // Prevent overlaps by offsetting them simply
-      chip.style.left = `${(index * 150) + 10}px`;
-      chip.style.width = "260px";
-
-      chip.setAttribute("role", "button"); 
-      chip.setAttribute("tabindex", "0");
-      
-      chip.innerHTML = `
-        <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
-            <span class="day-chip-time">${t.taskType === "Möte" ? "📅" : "🕐"} ${timeLabel}</span>
-            <span class="day-chip-title" style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.title}</span>
-            ${t.priority === "Hög" ? "<span style='color:#ff4d4d;font-size:12px;flex-shrink:0;'>🔴</span>" : ""}
-        </div>
-      `;
-      
-      chip.onclick = () => openTaskDialog({ taskService, taskToEdit: t });
-      chip.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTaskDialog({ taskService, taskToEdit: t }); } };
-      line.append(chip);
-    });
-    row.append(line);
-    axis.append(row);
-  }
-  wrapper.append(axis);
-  return wrapper;
-}
 
 /**
  * @file taskScreen.js
  * @description Hanterar huvudskärmen för uppgifter (Kanban-vyn).
  */
 
-// Uppdaterad: Tar nu emot currentDate och onNavigateDate från ViewController
-export const taskScreen = ({ taskService, navigate, currentDate, onNavigateDate }) => {
-  const state = loadState();
-  const people = state.people || [];
+ export const taskScreen = ({taskService, navigate, currentDate, onNavigateDate})=>
+ {
+      // TODO: eröstt med viewmodel och api
+      const state = loadState();
+      const people = state.people || [];
 
-  let currentFilter = localStorage.getItem("taskViewFilter") || "Team";
-  let currentViewMode = localStorage.getItem("taskViewMode") || "board";
 
-  const screenWrapper = document.createElement("main");
-  screenWrapper.classList.add("taskScreenWrapper");
-  screenWrapper.setAttribute("aria-label", "Projekttavla");
+      let currentFilter = localStorage.getItem("taskViewFilter") || "Team";
+      let currentViewMode = localStorage.getItem("taskViewMode") || "board";
 
-  const contentArea = document.createElement("div");
-  contentArea.classList.add("taskContentArea");
 
-  // ---------- NAVIGERINGSKONTROLLER (PILAR) ----------
-  const navContainer = document.createElement("div");
-  navContainer.className = "task-view-nav-strip";
+      /**
+       * Main wrapper
+       */
+      const screenWrapper = document.createElement("main");
+      screenWrapper.classList.add("taskScreenWrapper");
+      screenWrapper.setAttribute("aria-label", "Projekttavla");
+      const contentArea = document.createElement("div");
+      contentArea.classList.add("taskContentArea");
 
-  const prevBtn = document.createElement("button");
-  prevBtn.className = "task-nav-btn";
-  prevBtn.innerHTML = "◀";
-  prevBtn.onclick = () => {
-    const steps = (currentViewMode === "week") ? -7 : -1;
-    onNavigateDate(steps);
-  };
-
-  const nextBtn = document.createElement("button");
-  nextBtn.className = "task-nav-btn";
-  nextBtn.innerHTML = "▶";
-  nextBtn.onclick = () => {
-    const steps = (currentViewMode === "week") ? 7 : 1;
-    onNavigateDate(steps);
-  };
-
-  const dateLabel = document.createElement("span");
-  dateLabel.className = "task-nav-date-label";
-
-  navContainer.append(prevBtn, dateLabel, nextBtn);
-
-  // ---------- VIEW MODE TOGGLE ----------
-  const viewToggleBar = document.createElement("div");
-  viewToggleBar.className = "view-toggle-bar";
-  viewToggleBar.setAttribute("role", "group");
-  viewToggleBar.setAttribute("aria-label", "Visa som");
-
-  const viewModes = [
-    { key: "board", label: "📦 Board" },
-    { key: "week",  label: "📅 Vecka" },
-    { key: "day",   label: "⏰ Dag" },
-  ];
-  viewModes.forEach(vm => {
-    const btn = document.createElement("button");
-    btn.className = `view-toggle-btn${currentViewMode === vm.key ? " active" : ""}`;
-    btn.textContent = vm.label;
-    btn.setAttribute("aria-pressed", String(currentViewMode === vm.key));
-    btn.onclick = () => {
-      currentViewMode = vm.key;
-      localStorage.setItem("taskViewMode", vm.key);
-      viewToggleBar.querySelectorAll(".view-toggle-btn").forEach(b => { b.classList.remove("active"); b.setAttribute("aria-pressed", "false"); });
-      btn.classList.add("active"); btn.setAttribute("aria-pressed", "true");
-      updateView(currentFilter);
-    };
-    viewToggleBar.append(btn);
-  });
-
-  // ---------- FILTERKONTROLLER ----------
-  const filterHeader = document.createElement("header");
-  filterHeader.classList.add("taskFilterContainer");
-
-  const filterLabel = document.createElement("label");
-  filterLabel.setAttribute("for", "task-filter-select");
-  filterLabel.classList.add("filterLabel");
-  filterLabel.textContent = "Visa uppgifter för: ";
-
-  const select = document.createElement("select");
-  select.id = "task-filter-select";
-  select.classList.add("taskFilterSelect");
-  select.setAttribute("aria-controls", "task-board");
-
-  const teamOption = document.createElement("option");
-  teamOption.value = "Team";
-  teamOption.textContent = "Hela Teamet";
-  if (currentFilter === "Team") teamOption.selected = true;
-  select.append(teamOption);
-
-  const teamSeparator = document.createElement("option");
-  teamSeparator.disabled = true;
-  teamSeparator.textContent = "────────────────";
-  select.append(teamSeparator);
-
-  people.forEach(personName => {
-    const option = document.createElement("option");
-    option.value = personName; 
-    option.textContent = (personName === "Ingen") ? "🟢 Lediga uppgifter" : personName;
-    if (personName === currentFilter) option.selected = true;
-    select.append(option);
-  });
-
-  const archiveSeparator = document.createElement("option");
-  archiveSeparator.disabled = true;
-  archiveSeparator.textContent = "────────────────";
-  select.append(archiveSeparator);
-
-  const archiveOption = document.createElement("option");
-  archiveOption.value = "Arkiv";
-  archiveOption.textContent = "📁 Visa Stängda Uppgifter";
-  if (currentFilter === "Arkiv") archiveOption.selected = true;
-  select.append(archiveOption);
-
-  const updateView = (selectedFilter) => {
-    contentArea.innerHTML = ""; 
-
-    const tasks  = taskService.getTasks();
-
-    // Uppdatera datumlabeln i nav-strippen
-    if (currentViewMode === "week") {
-      const mon = startOfWeekMonday(currentDate);
-      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-      dateLabel.textContent = `V. ${getWeekNumber(currentDate)} (${mon.getDate()}/${mon.getMonth()+1} - ${sun.getDate()}/${sun.getMonth()+1})`;
-      navContainer.style.display = "flex";
-    } else if (currentViewMode === "day") {
-      dateLabel.textContent = currentDate.toLocaleDateString("sv-SE", { day: "numeric", month: "long" });
-      navContainer.style.display = "flex";
-    } else {
-      navContainer.style.display = "none";
-    }
-
-    if (tasks.length === 0 && selectedFilter !== "Arkiv") {
-      filterHeader.style.display = "none";
-      const emptyState = document.createElement("div");
-      emptyState.className = "empty-state-container";
-      emptyState.setAttribute("role", "region");
-      emptyState.setAttribute("aria-label", "Välkommen till Lianer");
-      emptyState.innerHTML = getWelcomeHTML(false);
-      attachWelcomeEvents(emptyState, taskService, null);
-      contentArea.append(emptyState);
-      return;
-    }
-
-    filterHeader.style.display = "";
-
-    // ── Week View ──
-    if (currentViewMode === "week" && selectedFilter !== "Arkiv") {
-      const filteredTasks = selectedFilter === "Team"
-        ? tasks
-        : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
-      contentArea.append(renderWeekView(filteredTasks, currentDate, taskService));
-      return;
-    }
-
-    // ── Day View ──
-    if (currentViewMode === "day" && selectedFilter !== "Arkiv") {
-      const filteredTasks = selectedFilter === "Team"
-        ? tasks
-        : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
-      contentArea.append(renderDayView(filteredTasks, currentDate, taskService));
-      return;
-    }
-
-    const board = document.createElement("div");
-    board.id = "task-board";
-    board.classList.add("taskBoard");
-    board.setAttribute("role", "region");
-    board.setAttribute("aria-live", "polite");
-
-    if (selectedFilter === "Arkiv") {
-      const archiveColumn = document.createElement("section");
-      archiveColumn.className = "taskWrapper closed-tasks-archive";
-      archiveColumn.setAttribute("aria-label", "Stängda uppgifter");
-      archiveColumn.setAttribute("data-status", "Stängd");
-      
-      const closedTasks = tasks.filter(t => t.status === TASK_STATUSES.CLOSED);
-      archiveColumn.append(taskList(TASK_STATUSES.CLOSED, closedTasks, {
-        taskService,
-        navigate,
-        onDropTask: (taskId, newStatus, prevOrderId, nextOrderId) => {
-          if (taskService.updateTaskOrder) {
-            taskService.updateTaskOrder(taskId, newStatus, prevOrderId, nextOrderId);
-            window.dispatchEvent(new CustomEvent('renderApp'));
+      /**
+       * Header on taskboards
+       * Holds controls for filtering etc
+       */
+      const toolbar = createTaskFilterHeader({
+          people,
+          currentFilter,
+          currentViewMode,
+          onNavigateDate,
+          onFilterChange: (selectedFilter) => {
+            currentFilter = selectedFilter;
+            localStorage.setItem("taskViewFilter", currentFilter);
+            updateView(currentFilter);
+          },
+          onViewModeChange: (viewMode) => {
+            currentViewMode = viewMode;
+            localStorage.setItem("taskViewMode", viewMode);
+            updateView(currentFilter);
           }
-        }
-      }));
-      board.append(archiveColumn);
-    } 
-    else {
-      const filteredTasks = selectedFilter === "Team" 
-        ? tasks 
-        : tasks.filter(t => {
-            if (t.assignedTo && Array.isArray(t.assignedTo)) {
-              if (selectedFilter === "Ingen") {
-                return t.assignedTo.length === 0 || t.assignedTo.includes("Ingen");
-              }
-              return t.assignedTo.includes(selectedFilter);
-            }
-            return t.assigned === selectedFilter;
-          });
-
-      const activeStatuses = [TASK_STATUSES.TODO, TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.DONE];
-      
-      activeStatuses.forEach(status => {
-        const columnWrapper = document.createElement("section");
-        columnWrapper.classList.add("taskWrapper");
-        columnWrapper.setAttribute("data-status", status); // VIKTIGT för glow
-        columnWrapper.setAttribute("aria-label", `Kolumn: ${status}`);
-
-        const columnTasks = filteredTasks
-          .filter(t => t.status === status)
-          .sort((a, b) => taskService._compareRank(a.order || "", b.order || ""));
-          
-        columnWrapper.append(taskList(status, columnTasks, {
-          taskService,
-          navigate,
-          onMoveTask: (id,dir) => {
-            taskService.moveTask(id,dir);
-            window.dispatchEvent(new CustomEvent('renderApp'));
-          },
-          onChangeStatus: (id, newStatus) => {
-            taskService.changeStatus(id, newStatus);
-            window.dispatchEvent(new CustomEvent('renderApp'));
-          },
-          onDeleteTask: (task) => {
-            taskService.deleteTask(task.id);
-            window.dispatchEvent(new CustomEvent('renderApp'));
-          },
-          onEditTask: (task) => openTaskDialog({ taskService, taskToEdit: task }),
-          onDropTask: (taskId, newStatus, prevOrderId, nextOrderId) => {
-            if (taskService.updateTaskOrder) {
-              taskService.updateTaskOrder(taskId, newStatus, prevOrderId, nextOrderId);
-              window.dispatchEvent(new CustomEvent('renderApp'));
-            }
-          }
-        }));
-        board.append(columnWrapper);
       });
-    }
 
-    contentArea.append(board);
-  };
+      /**
+       * Logic to update board based on week/day etc
+       */
 
-  select.addEventListener("change", (e) => {
-    currentFilter = e.target.value;
-    localStorage.setItem("taskViewFilter", currentFilter);
-    updateView(currentFilter);
-  });
+      const updateNavigationLabel = () => {
+          if (currentViewMode === "week") {
+            const mon = startOfWeekMonday(currentDate);
+            const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+            toolbar.dateLabel.textContent = `V. ${getWeekNumber(currentDate)} (${mon.getDate()}/${mon.getMonth()+1} - ${sun.getDate()}/${sun.getMonth()+1})`;
+            toolbar.navContainer.style.display = "flex";
+          } else if (currentViewMode === "day") {
+            toolbar.dateLabel.textContent = currentDate.toLocaleDateString("sv-SE", { day: "numeric", month: "long" });
+            toolbar.navContainer.style.display = "flex";
+          } else {
+            toolbar.navContainer.style.display = "none";
+          }
+      };
+      
+      const updateView = (selectedFilter) => {
+          contentArea.innerHTML = "";
+      
+          const tasks = taskService.getTasks();
+      
+          // Uppdatera datumlabeln i nav-strippen
+          updateNavigationLabel();
+      
+          if (tasks.length === 0 && selectedFilter !== "Arkiv") {
+            toolbar.filterHeader.style.display = "none";
+            renderEmptyState(contentArea, taskService);
+            return;
+          }
+      
+          toolbar.filterHeader.style.display = "";
+      
+          // ── Week View ──
+          if (currentViewMode === "week" && selectedFilter !== "Arkiv") {
+            const filteredTasks = selectedFilter === "Team"
+              ? tasks
+              : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
+            contentArea.append(renderWeekView(filteredTasks, currentDate, taskService));
+            return;
+          }
+      
+          // ── Day View ──
+          if (currentViewMode === "day" && selectedFilter !== "Arkiv") {
+            const filteredTasks = selectedFilter === "Team"
+              ? tasks
+              : tasks.filter(t => t.assignedTo?.includes(selectedFilter) || t.assigned === selectedFilter);
+            contentArea.append(renderDayView(filteredTasks, currentDate, taskService));
+            return;
+          }
+      
+          contentArea.append(renderTaskBoard({
+            tasks,
+            selectedFilter,
+            taskService,
+            navigate,
+            taskList,
+            openTaskDialog,
+            TASK_STATUSES
+          }));
+        };
+      
+        updateView(currentFilter);
+      
+        screenWrapper.append(toolbar.filterHeader, contentArea);
+      
+        return screenWrapper;
+ }
 
-  updateView(currentFilter);
 
-  // Nav-strippen läggs till mellan select och viewToggle
-  filterHeader.append(filterLabel, select, navContainer, viewToggleBar);
-  screenWrapper.append(filterHeader, contentArea);
+ /*
+  * 
+Implementeringstankar: 
 
-  return screenWrapper;
-};
+taskScreen vet mest om hur sitt UI ska se ut, och
+kontrollerna / logiken på UI. 
+skapa en ViewModel(ish) klass som håller en Map (snapshot)
+av den data som ska visas. 
+VM är source of truth till UI. Service till VM. 
+Så om ändring sker i UI (t.ex status blir done), så 
+skickar VM vidare ned till api , skickar ut uppdaterad snapshot. 
+Optimera här så  vi intd behöcer hämta en HEL lista igen. 
+Kanske en listra i backend för att hämta grupper av data medc barea id ? 
 
-// Hjälpfunktion för veckonummer
-function getWeekNumber(d) {
-  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
+I de flesta fall ska listan i UI vara derivierad från snapshot listan i VM 
+  * 
+  */

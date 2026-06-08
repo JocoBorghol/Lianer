@@ -2,7 +2,7 @@ import { renderCalendar } from "./calendarView.js";
 import { taskScreen } from "../taskList/taskScreen.js";
 import { renderSettings } from "./settingsView.js"; 
 import { renderContacts } from "./contactsView.js";
-import { renderDashboard } from "./dashboardView.js";
+import { renderDashboard } from "./dashboard/dashboardView.js";
 
 export class ViewController {
   constructor(target, service) {
