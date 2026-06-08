@@ -30,8 +30,8 @@ window.lianerSmokeTests = Object.freeze({
 
 /*
   Phase 1:
-  Visa login/register UI först.
-  Vi kopplar API-auth i nästa fas.
+  Visa login/register UI först. TODO
+ 
 */
 showAuthScreen();
 

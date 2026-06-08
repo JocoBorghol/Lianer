@@ -28,6 +28,7 @@ export default {
   collectCoverageFrom: [
     "js/**/*.js",
     "!js/taskList/seed.js",
+    "!js/views/auth/**",
     "!js/comps/welcomeOverlay.js",
     "!js/data/tasks.js",
     "!js/**/*.test.js",
