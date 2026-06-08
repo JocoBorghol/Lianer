@@ -76,6 +76,7 @@ export async function renderDashboard(container) {
   // Append wrapper IMMEDIATELY so controls are visible
   container.append(wrapper);
 
+  // här
   const state = loadState();
   const people = (state.people || []).filter(p => p !== "Ingen");
   const favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
