@@ -12,7 +12,6 @@
 
 # Exkludera dokumentation
 README.md
-docs/
 
 # Eventuella lokala loggar eller slaskfiler
 *.log
