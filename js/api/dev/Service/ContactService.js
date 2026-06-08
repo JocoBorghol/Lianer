@@ -1,4 +1,4 @@
-import { contactApi } from "../Endpoints/contactApi";
+import { contactApi } from "../Endpoints/contactApi.js";
 
 export class ContactService {
     constructor(api = contactApi) 

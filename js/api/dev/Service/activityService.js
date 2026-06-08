@@ -1,4 +1,4 @@
-import { activityApi } from "../Endpoints/activityApi";
+import { activityApi } from "../Endpoints/activityApi.js";
 
 export class ActivityService{
     constructor(api = activityApi){

@@ -1,5 +1,5 @@
-import { apiRequest } from "../Client/apiClient";
-import { ApiEndpoints } from "./Endpoints";
+import { apiRequest } from "../Client/apiClient.js";
+import { ApiEndpoints } from "./Endpoints.js";
 
 const TARGET = "core";
 const contactsEndpoint = ApiEndpoints.contacts.root();

@@ -1,6 +1,6 @@
-import { authApi } from "../Endpoints/authApi";
-import { userApi } from "../Endpoints/userApi";
-import { saveToken,getToken,clearToken,hasToken  } from "../Security/tokenStore";
+import { authApi } from "../Endpoints/authApi.js";
+import { userApi } from "../Endpoints/userApi.js";
+import { saveToken,getToken,clearToken,hasToken  } from "../Security/tokenStore.js";
 
 // Dev only - fetches jwt from state
 const CURRENT_USER_KEY = "lianer:auth:currentUser";
@@ -39,7 +39,40 @@ export class AuthService
         return this.currentUser ?? readCurrentUser();
     }
 
+    async loginWithGoogleAccessToken(accessToken) 
+    {
+        const response = await this.api.google(accessToken);
 
+        const token = getAccessToken(response);
+        saveToken(token);
+
+        const user = response.user ?? null;
+        this.currentUser = user;
+        saveCurrentUser(user);
+
+        notifyAuthChanged({
+            isAuthenticated: true,
+            user
+        });
+
+        return {
+            token,
+            user,
+            response
+        };
+    }
+
+    async startGoogleLogin() 
+    {
+        const response = await this.api.getGoogleUrl();
+        const url = response?.url;
+
+        if (!url || typeof url !== "string") {
+            throw new Error("Google login URL missing from response.");
+        }
+
+        window.location.href = url;
+    }
     async login(requestBody) 
     {
         const response = await this.api.login(requestBody);
@@ -83,7 +116,7 @@ export class AuthService
 }
 
 export const authService = new AuthService();
-function getJwtToken(response)
+function getAccessToken(response)
 {
     const token = response?.accessToken;
         if (!token || typeof token !== "string") {

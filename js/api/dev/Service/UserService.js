@@ -1,4 +1,4 @@
-import { userApi } from "../Endpoints/userApi";
+import { userApi } from "../Endpoints/userApi.js";
 
 export class UserService {
     constructor(api = userApi) 
@@ -119,7 +119,7 @@ export class UserService {
     }
  
     clearCache() {
-        this.activities.clear();
+        this.users.clear();
     }
 }
 

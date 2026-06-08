@@ -1,4 +1,4 @@
-import { noteApi } from "../Endpoints/noteApi";
+import { noteApi } from "../Endpoints/noteApi.js";
 
 export class NoteService 
 {
@@ -59,7 +59,7 @@ export class NoteService
 
         return true;
     }
-    
+
     async loadNotesForActivity(activityId, paging = {}) 
     {
         const notes = await this.api.getByActivityId(activityId, paging);

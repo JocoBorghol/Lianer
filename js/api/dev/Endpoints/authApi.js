@@ -1,7 +1,7 @@
-import { apiRequest } from "../Client/apiClient";
-import { ApiEndpoints } from "./Endpoints";
+import { apiRequest } from "../Client/apiClient.js";
+import { ApiEndpoints } from "./Endpoints.js";
 
-const TATGET = "core";
+const TARGET = "core";
 
 
 export const authApi = Object.freeze({

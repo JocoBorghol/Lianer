@@ -3,7 +3,7 @@ import { subscribe } from "./js/observer.js";
 import { initTheme } from "./js/theme.js";
 import { openTaskDialog } from "./js/menu/openTaskDialog.js";
 import { maybeShowWelcomeOverlay } from "./js/comps/welcomeOverlay.js";
-import { renderAuthView } from "./js/views/authView.js";
+import { renderAuthView } from "./js/views/auth/authView.js";
 import { initSeed } from "./js/taskList/seed.js";
 import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
