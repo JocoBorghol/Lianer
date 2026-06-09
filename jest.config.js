@@ -20,7 +20,7 @@ export default {
     "/docs/",
     "/js/api/dev/",
     "/js/api/e2e/",
-
+    "/js/config/",
     "/js/taskList/TaskScreenViewModel.js",
     "/js/views/ContactsViewModel.js",
     "/js/views/CalendarViewModel.js",
@@ -40,7 +40,7 @@ export default {
   // Vi ignorerar filer som inte är logik-tunga för att få en rättvisande bild
   collectCoverageFrom: [
     "js/**/*.js",
-
+    "!js/config/**",
     "!js/taskList/seed.js",
     "!js/views/auth/**",
     "!js/comps/welcomeOverlay.js",
