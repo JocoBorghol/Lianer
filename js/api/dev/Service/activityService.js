@@ -1,67 +1,83 @@
 import { activityApi } from "../Endpoints/activityApi.js";
 
-export class ActivityService{
-    constructor(api = activityApi){
-        this.api = api;
-        this.activities = new Map();
+export class ActivityService {
+    constructor({ activityApi: api = activityApi, activityStore }) {
+        this.activityApi = api;
+        this.activityStore = activityStore;
     }
 
-    async init(paging = {}){
-        await this.loadActivities(paging);
+    /**
+     * Its important paging is mapped correctly to our backend. 
+     * So this helper normalizes and also ensures both values exist.
+     * @param {object containing current pagenumber and pagesize} paging 
+     * @returns {currentPage, pageSize}
+     */
+    #normalizePaging(paging={}){
+        const currentPage = Number(paging.currentPage ?? 1);
+        const pageSize = Number(paging.pageSize ?? 20);
 
+        return {
+            currentPage: Number.isInteger(currentPage) && currentPage > 0
+                ? currentPage
+                : 1,
+
+            pageSize: Number.isInteger(pageSize) && pageSize > 0
+                ? pageSize
+                : 20
+            }
     }
 
-    async loadActivities(paging = {})
-    {
-        const response = await this.api.getAll(paging);
-        this.activities.clear();
-        const data = Array.isArray(response) ? response : [];
-        data.forEach(activity=> {
-            if (!activity || !activity.id) return;
-            this.activities.set(activity.id, activity);
-            
-        });
-        return this.getActivities();
+    /**
+     * 
+     * @param {paging} 
+     * @returns 
+     */
+    async loadActivities(paging = {}) {
+        const normalizedPaging = this.#normalizePaging(paging);
+        const response = await this.activityApi.getAll(normalizedPaging);
+
+        const activities = Array.isArray(response)
+            ? response
+            : response?.items ?? [];
+
+        this.activityStore.setMany(activities);
+
+        return this.activityStore.getAll();
     }
+
 
     getActivities() {
-        return Array.from(this.activities.values());
+        return this.activityStore.getAll();
     }
 
     getActivityById(id) {
-        return this.activities.get(id) ?? null;
+        return this.activityStore.getById(id);
     }
 
-    byStatus(status) {
-        return this.getActivities().filter(activity => activity.status === status);
-    }
 
-    async createActivity(requestBody)
-    {
-        const created = await this.api.create(requestBody);
-        if (created && created.id) {
-            this.activities.set(created.id, created);
+    async updateActivity(requestBody) {
+        const updated = await this.activityApi.update(requestBody);
+
+        if (updated?.id) {
+            this.activityStore.upsert(updated);
         }
-        return created;
-    }
 
-    async updateActivity(requestBody)
-    {
-        const updated = await this.api.update(requestBody);
-        if (updated && updated.id) {
-            this.activities.set(updated.id, updated);
-        }
         return updated;
     }
 
-    async deleteActivity(id) {
-        await this.api.delete(id);
-        this.activities.delete(id);
+    async deleteActivity(id) 
+    {
+        await this.activityApi.delete(id);
+        this.activityStore.remove(id);
         return true;
     }
 
-    clearCache() {
-        this.activities.clear();
+    async createActivity(requestBody) 
+    {
+        const created = await this.activityApi.create(requestBody);
+        if (created?.id) {
+            this.activityStore.upsert(created);
+        }
+        return created;
     }
-
 }

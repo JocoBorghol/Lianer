@@ -2,15 +2,149 @@
 import { exportContactsToVCard, parseVCard, createVCard } from "../utils/vcard.js";
 import {
   initContactsDB,
-  getAllContacts,
-  addContact,
-  updateContact,
-  deleteContact,
-  searchContacts,
-  importContacts,
+  getAllContacts as legacyGetAllContacts,
+  addContact as legacyAddContact,
+  updateContact as legacyUpdateContact,
+  deleteContact as legacyDeleteContact,
+  searchContacts as legacySearchContacts,
+  importContacts as legacyImportContacts,
   groupAlphabetically
 } from "../utils/contactsDb.js";
 import { loadState } from "../storage.js";
+
+
+let selectedContactId = null;
+let isMobileDetailOpen = false;
+let currentSearchTerm = "";
+let currentStatusFilter = "Alla"; // State for status filter
+let currentAssigneeFilter = "Alla"; // State for assignee filter
+let allContacts = [];
+let dbReady = false;
+let showingFavorites = false; // Default: show all contacts (was true)
+
+
+
+let activeContactViewModel = null;
+
+async function ensureContactSourceReady() {
+  if (activeContactViewModel) {
+    await activeContactViewModel.init();
+    return;
+  }
+
+  if (!dbReady) {
+    await initContactsDB();
+    dbReady = true;
+  }
+}
+
+function upsertContactInMemory(contact) {
+  if (!contact?.id) return;
+
+  const index = allContacts.findIndex(c => String(c.id) === String(contact.id));
+
+  if (index === -1) {
+    allContacts = [contact, ...allContacts];
+    return;
+  }
+
+  allContacts[index] = contact;
+}
+
+function removeContactFromMemory(id) {
+  allContacts = allContacts.filter(contact => String(contact.id) !== String(id));
+}
+
+async function getAllContacts() {
+  await ensureContactSourceReady();
+
+  if (activeContactViewModel) {
+    return activeContactViewModel.getContacts();
+  }
+
+  return await legacyGetAllContacts();
+}
+
+async function searchContacts(searchTerm) {
+  await ensureContactSourceReady();
+
+  if (activeContactViewModel) {
+    return activeContactViewModel.searchContacts(searchTerm);
+  }
+
+  return await legacySearchContacts(searchTerm);
+}
+
+async function addContact(contact) {
+  if (activeContactViewModel) {
+    const created = await activeContactViewModel.createContact(contact);
+
+    if (created?.id) {
+      upsertContactInMemory(created);
+    }
+
+    return created;
+  }
+
+  return await legacyAddContact(contact);
+}
+
+async function updateContact(contact) {
+  if (activeContactViewModel) {
+    const updated = await activeContactViewModel.updateContact(contact);
+
+    if (updated?.id) {
+      upsertContactInMemory(updated);
+    }
+
+    return updated;
+  }
+
+  return await legacyUpdateContact(contact);
+}
+
+async function deleteContact(id) {
+  if (activeContactViewModel) {
+    await activeContactViewModel.deleteContact(id);
+    removeContactFromMemory(id);
+    return true;
+  }
+
+  return await legacyDeleteContact(id);
+}
+
+async function importContacts(contacts) {
+  if (activeContactViewModel) {
+    const createdContacts = await activeContactViewModel.importContacts(contacts);
+
+    if (Array.isArray(createdContacts)) {
+      createdContacts.forEach(upsertContactInMemory);
+    }
+
+    return createdContacts;
+  }
+
+  return await legacyImportContacts(contacts);
+}
+
+function getContactPeople() {
+  if (activeContactViewModel) {
+    return activeContactViewModel.getPeople();
+  }
+
+  return loadState().people || [];
+}
+
+function getAssignableContactUsers() {
+  if (activeContactViewModel) {
+    return activeContactViewModel.getAssignableUsers();
+  }
+
+  return getContactPeople().map(name => ({
+    id: name === "Ingen" ? null : name,
+    fullName: name
+  }));
+}
 
 // ===================================================================
 // LAZY VENDOR SCRIPT LOADER
@@ -38,33 +172,34 @@ function loadVendorScripts() {
 // ===================================================================
 // STATE
 // ===================================================================
-let selectedContactId = null;
-let isMobileDetailOpen = false;
-let currentSearchTerm = "";
-let currentStatusFilter = "Alla"; // State for status filter
-let currentAssigneeFilter = "Alla"; // State for assignee filter
-let allContacts = [];
-let dbReady = false;
-let showingFavorites = false; // Default: show all contacts (was true)
+
 
 // ===================================================================
 // MAIN RENDER
 // ===================================================================
-export const renderContacts = async (container, params = null) => {
+export const renderContacts = async (container, params = null, options = {}) => {
+  activeContactViewModel = options.contactViewModel ?? activeContactViewModel;
+
   container.innerHTML = "";
 
-  // Init DB on first render
-  if (!dbReady) {
-    await initContactsDB();
-    dbReady = true;
-  }
-
-  // Lazy-load vendor scripts (qrcode, html5-qrcode) in parallel with DB init
   loadVendorScripts();
 
-  allContacts = currentSearchTerm
-    ? await searchContacts(currentSearchTerm)
-    : await getAllContacts();
+  try {
+    allContacts = currentSearchTerm
+      ? await searchContacts(currentSearchTerm)
+      : await getAllContacts();
+  } catch (error) {
+    console.error("Could not load contacts:", error);
+
+    container.innerHTML = `
+      <div class="contacts-empty-state" role="alert">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-text">Kunde inte ladda kontakter.</div>
+      </div>
+    `;
+
+    return;
+  }
 
   // Auto-select if highlight param
   if (params && params.highlightId) {
@@ -249,7 +384,7 @@ function createMasterPanel(container, shell) {
   const assigneeFilterSelect = document.createElement("select");
   assigneeFilterSelect.style.cssText = "padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg-element);color:var(--text-main);font-family:inherit;font-size:13px;min-width:150px;";
 
-  const people = loadState().people || [];
+  const people = getContactPeople();
   const allOpt = document.createElement("option");
   allOpt.value = "Alla";
   allOpt.textContent = "Ansvarig: Alla";
@@ -816,36 +951,55 @@ function refreshDetailContent(detail, container, shell) {
   assignSelect.className = "crm-status-select"; // Reuse style
   assignSelect.style.marginBottom = "20px";
 
-  const people = loadState().people || [];
-  const assignOptionDefault = document.createElement("option");
-  assignOptionDefault.value = "";
-  assignOptionDefault.textContent = "— Välj ansvarig —";
-  assignSelect.append(assignOptionDefault);
+const assignableUsers = getAssignableContactUsers();
 
-  people.forEach(p => {
-    if (p === "Ingen") return;
-    const opt = document.createElement("option");
-    opt.value = p;
-    opt.textContent = p;
-    if (contact.assignedTo === p) opt.selected = true;
-    assignSelect.append(opt);
-  });
+const assignOptionDefault = document.createElement("option");
+assignOptionDefault.value = "";
+assignOptionDefault.textContent = "— Ingen ansvarig —";
+assignSelect.append(assignOptionDefault);
+
+assignableUsers.forEach(user => {
+  if (!user.id) return;
+
+  const opt = document.createElement("option");
+  opt.value = user.id;
+  opt.textContent = user.fullName;
+
+  if (contact.assignedUserId === user.id) {
+    opt.selected = true;
+  }
+
+  assignSelect.append(opt);
+});
 
   assignSelect.onchange = async () => {
     const oldAssignee = contact.assignedTo || "Ingen";
-    const newAssignee = assignSelect.value || "Ingen";
-    contact.assignedTo = assignSelect.value;
 
-    // Log interaction
+    const assignedUserId = assignSelect.value || null;
+    const selectedOption = assignSelect.selectedOptions[0];
+    const newAssignee = assignedUserId
+      ? selectedOption?.textContent ?? "Ingen"
+      : "Ingen";
+
+    contact.assignedUserId = assignedUserId;
+    contact.assignedTo = assignedUserId ? newAssignee : "";
+
     const logItem = {
       id: Date.now(),
       date: new Date().toISOString(),
-      type: "note", // Log as note/system event
+      type: "note",
       content: `Ansvarig ändrad från ${oldAssignee} till ${newAssignee}`
     };
+
     contact.interactionLog = [logItem, ...(contact.interactionLog || [])];
 
-    await updateContact(contact);
+    const updated = await updateContact(contact);
+
+    if (updated) {
+      Object.assign(contact, updated);
+    }
+
+    refreshList(shell.querySelector(".contacts-master"), container, shell);
     renderTimeline(contact, historyContent);
   };
 
@@ -1059,18 +1213,24 @@ function openContactModal(contact, container, shell, master) {
   const assignSelect = document.createElement("select");
   assignSelect.style.cssText = "width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-element);color:var(--text-main);";
 
-  const people = loadState().people || [];
+  const assignableUsers = getAssignableContactUsers();
+
   const assignOptionDefault = document.createElement("option");
   assignOptionDefault.value = "";
-  assignOptionDefault.textContent = "— Välj —";
+  assignOptionDefault.textContent = "— Ingen ansvarig —";
   assignSelect.append(assignOptionDefault);
 
-  people.forEach(p => {
-    if (p === "Ingen") return;
+  assignableUsers.forEach(user => {
+    if (!user.id) return;
+
     const opt = document.createElement("option");
-    opt.value = p;
-    opt.textContent = p;
-    if (isEdit && contact.assignedTo === p) opt.selected = true;
+    opt.value = user.id;
+    opt.textContent = user.fullName;
+
+    if (isEdit && contact.assignedUserId === user.id) {
+      opt.selected = true;
+    }
+
     assignSelect.append(opt);
   });
   assignContainer.append(assignLabel, assignSelect);
@@ -1142,7 +1302,10 @@ function openContactModal(contact, container, shell, master) {
       },
       status: newStatus,
       completedAt: assignedCompletedAt,
-      assignedTo: assignSelect.value,
+      assignedUserId: assignSelect.value || null,
+      assignedTo: assignSelect.value
+        ? assignSelect.selectedOptions[0]?.textContent ?? ""
+        : "",      
       interactionLog: isEdit ? (contact.interactionLog || []) : [],
       isFavorite: isEdit ? (contact.isFavorite || false) : false
     };
@@ -1156,13 +1319,11 @@ function openContactModal(contact, container, shell, master) {
     );
     if (duplicate) { alert(`En kontakt med namnet "${data.name}" finns redan.`); return; }
 
-    if (isEdit) {
-      await updateContact(data);
-    } else {
-      await addContact(data);
-    }
+    const savedContact = isEdit
+      ? await updateContact(data)
+      : await addContact(data);
 
-    selectedContactId = data.id;
+    selectedContactId = savedContact?.id ?? data.id;
     allContacts = await getAllContacts();
     refreshList(master, container, shell);
     refreshDetail(shell, container);
@@ -1313,8 +1474,9 @@ function openCsvImportModal(csvText, container, shell, master) {
 
     if (contacts.length === 0) { alert("Inga giltiga kontakter att importera."); return; }
 
-    await importContacts(contacts);
+    const createdContacts = await importContacts(contacts);
     allContacts = await getAllContacts();
+    selectedContactId = createdContacts?.[0]?.id ?? contacts[0].id;
     refreshList(master, container, shell);
     overlay.remove();
     alert(`Importerade ${contacts.length} kontakter!`);

@@ -12,29 +12,11 @@ export class UserService {
         await this.loadUsers();
     }
 
-    async loadUsers() 
-    {
-        const response = await this.api.getAll();
-        const data = Array.isArray(response) ? response : [];
-
-        this.users.clear();
-
-        data.forEach(user => {
-            const id = getUserId(user);
-            if (!id) return;
-
-            this.users.set(id, user);
-        });
-
-        return this.getUsers();
-    }
 
     getUsers() 
     {
         return Array.from(this.users.values());
     }
-
-
 
     getUserFullName(id) 
     {
@@ -45,7 +27,6 @@ export class UserService {
             ?? [user.firstName, user.lastName].filter(Boolean).join(" ").trim()
             ?? null;
     }
-
 
     getPeopleNames(includeUnassigned = true) 
     {
@@ -58,8 +39,6 @@ export class UserService {
 
         return includeUnassigned ? ["Ingen", ...names] : names;
     }
-
-
     getUserById(id) 
     {
         if (!id) return null;
@@ -117,10 +96,29 @@ export class UserService {
         this.users.delete(id);
         return true;
     }
- 
+    
+    async loadUsers() 
+    {
+        const response = await this.api.getAll();
+        const data = Array.isArray(response) ? response : [];
+
+        this.users.clear();
+
+        data.forEach(user => {
+            const id = getUserId(user);
+            if (!id) return;
+
+            this.users.set(id, user);
+        });
+
+        return this.getUsers();
+    }
+
     clearCache() {
         this.users.clear();
     }
+
+    
 }
 
 function getUserId(user) {

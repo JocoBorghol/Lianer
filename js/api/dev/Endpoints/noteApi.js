@@ -35,8 +35,7 @@ export const noteApi = Object.freeze({
             auth: true,
             body: {
                 title: requestBody.title,
-                content: requestBody.content,
-                createdBy: requestBody.createdBy
+                content: requestBody.content
             }
         });
     },
@@ -87,9 +86,7 @@ function validateCreateNote(requestBody) {
 
     assertRequiredString(requestBody.title, "title");
     assertRequiredString(requestBody.content, "content");
-    validateGuid(requestBody.createdBy);
 }
-
 function validateUpdateNote(requestBody) {
     if (!requestBody || typeof requestBody !== "object") {
         throw new Error("Update note request must be an object.");

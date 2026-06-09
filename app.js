@@ -4,11 +4,23 @@ import { initTheme } from "./js/theme.js";
 import { openTaskDialog } from "./js/menu/openTaskDialog.js";
 import { maybeShowWelcomeOverlay } from "./js/comps/welcomeOverlay.js";
 import { renderAuthView } from "./js/views/auth/authView.js";
-import { initSeed } from "./js/taskList/seed.js";
 import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
 import { ViewController } from "./js/views/viewController.js";
 import { smokeTestCreateUser } from "./js/api/dev/userSmokeTest.js";
+import { noteApi } from "./js/api/dev/Endpoints/noteApi.js";
+import { NoteService } from "./js/api/dev/Service/NoteService.js";
+import { ActivityStore } from "./js/api/dev/Service/ActivityStore.js";
+import { ActivityService } from "./js/api/dev/Service/activityService.js";
+import { TaskScreenViewModel } from "./js/taskList/TaskScreenViewModel.js";
+import { activityApi } from "./js/api/dev/Endpoints/activityApi.js";
+import { UserService } from "./js/api/dev/Service/UserService.js";
+import { CalendarViewModel } from "./js/views/CalendarViewModel.js";
+import { ContactStore } from "./js/views/ContactStore.js";
+import { ContactService } from "./js/views/ContactService.js";
+import { ContactViewModel } from "./js/views/ContactsViewModel.js";
+import { contactApi } from "./js/api/dev/Endpoints/contactApi.js";
+import { DashboardViewModel } from "./js/views/dashboard/DashboardViewModel.js";
 
 /**
  * @file app.js
@@ -28,18 +40,13 @@ window.lianerSmokeTests = Object.freeze({
   smokeTestCreateUser
 });
 
-/*
-  Phase 1:
-  Visa login/register UI först. TODO
  
-*/
 showAuthScreen();
 
 window.addEventListener("authFormSubmitted", (event) => {
   console.log("Auth form submitted:", event.detail);
 
-  // Phase 1: no real API auth yet.
-  // We enter the app when the UI form is submitted.
+ 
   startApplicationShell();
 });
 
@@ -57,15 +64,71 @@ function startApplicationShell() {
 
   app.classList.add("app");
 
-  // Initirar våra instanser
+  /*
+    Legacy - TODO - kommer byta ut detta snart
+  */
   const taskRepo = new TaskRepo();
-  const taskService = new TaskService(taskRepo);
-  taskService.init();
+  const legacyTaskService = new TaskService(taskRepo);
+  legacyTaskService.init();
+ 
+  const activityStore = new ActivityStore();
+
+  const activityService = new ActivityService({
+    activityApi,
+    activityStore
+  });
+  const noteService = new NoteService(noteApi);
+
+  let userService = null;
+
+  try {
+    userService = new UserService();
+  } catch (error) {
+    console.warn("UserService could not be created Error:", error);
+  }
+  const contactStore = new ContactStore();
+
+  const contactService = new ContactService({
+    contactApi,
+    contactStore
+  });
+
+  const contactViewModel = new ContactViewModel({
+    contactService,
+    userService
+  });
+  const taskScreenViewModel = new TaskScreenViewModel({
+    activityService,
+    userService,
+    noteService
+  });
+  const dashboardViewModel = new DashboardViewModel({
+    taskScreenViewModel,
+    contactViewModel
+  });
+  const calendarViewModel = new CalendarViewModel({
+    taskScreenViewModel
+  });
+
+
+  const activityTaskServiceAdapter = taskScreenViewModel.getTaskServiceAdapter();
+ 
+  const appServices = {
+    legacyTaskService,
+    activityStore,
+    activityService,
+    noteService,
+    contactStore,
+    contactService,
+    userService,
+    taskScreenViewModel,
+    calendarViewModel,
+    contactViewModel,
+    dashboardViewModel
+  };
 
   /**
    * Sidomeny (Navigation)
-   * @description Använder <aside> och role="navigation" för att markera sektionen som sekundärt innehåll/navigering.
-   * @type {HTMLElement}
    */
   const sideMenuDiv = document.createElement("aside");
   sideMenuDiv.classList.add("left");
@@ -74,8 +137,6 @@ function startApplicationShell() {
 
   /**
    * Huvudinnehåll (Main)
-   * @description Använder <main> för att markera applikationens centrala innehåll, vilket är kritiskt för tillgänglighet.
-   * @type {HTMLElement}
    */
   const mainContent = document.createElement("main");
   mainContent.classList.add("center");
@@ -84,55 +145,40 @@ function startApplicationShell() {
   /**
    * Initiera vyn-hanteraren och koppla den till huvudytan.
    */
-  const viewController = new ViewController(mainContent, taskService);
+  const viewController = new ViewController(mainContent, appServices);
 
   const sideMenu = menu({
     navigate: (view, params) => viewController.setView(view, params),
-    onAddTask: () => openTaskDialog({ taskService })
+    onAddTask: () => openTaskDialog({ taskService: activityTaskServiceAdapter })
   });
 
   sideMenuDiv.append(sideMenu);
 
-  /**
-   * Initiera startdata och sätt startvyn till dashboard.
-   * IMPORTANT: subscribe() must come AFTER initSeed + setView to avoid
-   * double-render. initSeed→saveState→notify would trigger rerenderActiveView
-   * before setView runs, rendering the dashboard twice.
-   */
-  initSeed();
-
-  // Bygg ihop applikationens grundstruktur atomiskt
+ 
   app.replaceChildren(sideMenuDiv, mainContent);
 
   viewController.setView("dashboard");
 
-  // Register observer AFTER initial render to prevent double-render
   subscribe(() => viewController.rerender());
 
-  // Show first-time welcome overlay after auth screen has been submitted
-  maybeShowWelcomeOverlay(taskService);
+  window.addEventListener("renderApp", () => {
+    viewController.rerender();
+  });
+  maybeShowWelcomeOverlay(legacyTaskService);
 
-  // Handle navigation events dispatched by overlay quick-start pills
   window.addEventListener("navigateTo", (e) => {
     const view = e.detail;
     if (view) viewController.setView(view);
   });
 
-  /**
-   * Global händelselyssnare för interaktioner.
-   * Hanterar bland annat öppning av dialogrutan för att lägga till nya uppgifter (FAB).
-   * @param {MouseEvent} e - Klickhändelsen.
-   */
   document.addEventListener("click", (e) => {
-    /** @type {Element|null} - Hittar närmaste element med klassen .addTaskFab */
     const fabButton = e.target.closest(".addTaskFab");
 
-    if (fabButton) {
-      openTaskDialog({ taskService });
-    }
+  if (fabButton) {
+    openTaskDialog({ taskService: activityTaskServiceAdapter });
+  }
   });
 }
-
 /**
  * Service Worker och Background Sync registrering.
  * Hanterar Offline-stöd och datasynkronisering i bakgrunden.

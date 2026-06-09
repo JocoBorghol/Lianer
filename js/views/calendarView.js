@@ -7,11 +7,10 @@
  * WCAG 2.1 AA: aria-label, aria-live, Tab/Enter, Escape, JSDoc.
  */
 
-import { loadState } from "../storage.js";
-import { TASK_STATUSES } from "../status.js";
+ import { TASK_STATUSES } from "../status.js";
 import { Btn } from "../comps/btn.js";
 import { announceMessage } from "../utils/ariaAnnouncer.js";
-import { addTaskDialog } from "../comps/dialog.js";
+import { openTaskDialog } from "../menu/openTaskDialog.js";
 import {
   parseICS,
   exportTasksToICS,
@@ -78,6 +77,27 @@ export function getWeekNumber(date) {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
 
+let activeCalendarViewModel = null;
+
+function getCalendarTaskService() {
+  return activeCalendarViewModel?.getTaskServiceAdapter?.() ?? null;
+}
+
+function openCalendarTask(task) {
+  const taskService = getCalendarTaskService();
+
+  if (!taskService) {
+    console.warn("Calendar task service adapter is missing.");
+    return;
+  }
+
+  openTaskDialog({
+    taskService,
+    taskToEdit: task
+  });
+}
+
+
 // ─── Status → CSS ───
 
 /**
@@ -127,59 +147,103 @@ function isMobile() {
  * @param {HTMLElement} container
  * @param {string} [focusId=null]
  */
-export function renderCalendar(container, focusId = null) {
+export function renderCalendar(container, options = {}) {
+  const {
+    calendarViewModel = activeCalendarViewModel,
+    focusId = null
+  } = typeof options === "string"
+    ? { focusId: options, calendarViewModel: activeCalendarViewModel }
+    : options;
+
+  activeCalendarViewModel = calendarViewModel;
+
   container.innerHTML = "";
 
-  const state = loadState();
-  let tasks = (state.tasks || []).filter(t => t.status !== TASK_STATUSES.CLOSED);
-  const people = state.people || [];
-  const importedEvents = getImportedEvents();
+  const renderLoading = () => {
+    const loading = document.createElement("section");
+    loading.className = "calendar";
+    loading.setAttribute("aria-label", "Kalender laddar");
+    loading.innerHTML = `<p class="emptyState">Laddar kalenderaktiviteter från API...</p>`;
+    container.append(loading);
+  };
 
-  if (calendarFilter !== "Alla") {
-    tasks = tasks.filter(t => {
-      if (Array.isArray(t.assignedTo) && t.assignedTo.includes(calendarFilter)) return true;
-      return t.assigned === calendarFilter;
+  const renderError = (error) => {
+    const errorBox = document.createElement("section");
+    errorBox.className = "calendar";
+    errorBox.setAttribute("role", "alert");
+    errorBox.innerHTML = `
+      <h2>Kunde inte ladda kalendern</h2>
+      <p>${error?.message ?? "Okänt fel."}</p>
+    `;
+    container.append(errorBox);
+  };
+
+  const renderReady = () => {
+    container.innerHTML = "";
+
+    let tasks = activeCalendarViewModel.getTasksForFilter(calendarFilter);
+    const people = activeCalendarViewModel.getPeople();
+    const importedEvents = getImportedEvents();
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    const wrapper = document.createElement("section");
+    wrapper.className = "calendar";
+    wrapper.setAttribute("aria-label", "Kalendervy över uppgifter");
+
+    wrapper.append(buildHeader(container));
+    wrapper.append(buildToolbar(people, container));
+
+    if (isMobile()) {
+      wrapper.append(buildAgendaView(tasks, importedEvents, todayStr));
+    } else {
+      wrapper.append(buildGridView(tasks, importedEvents, todayStr));
+    }
+
+    const legend = document.createElement("div");
+    legend.className = "calendar-legend";
+    legend.setAttribute("aria-hidden", "true");
+    legend.innerHTML = `
+      <span class="legend-item"><span class="legend-dot cal-todo"></span>Att göra</span>
+      <span class="legend-item"><span class="legend-dot cal-progress"></span>Pågår</span>
+      <span class="legend-item"><span class="legend-dot cal-done"></span>Klar</span>
+      <span class="legend-item"><span class="legend-dot cal-ical"></span>Extern (iCal)</span>
+    `;
+    wrapper.append(legend);
+
+    container.append(wrapper);
+
+    if (focusId) {
+      const el = document.getElementById(focusId);
+      if (el) el.focus();
+    }
+  };
+
+  if (!activeCalendarViewModel) {
+    renderError(new Error("CalendarViewModel saknas."));
+    return;
+  }
+
+  renderLoading();
+
+  activeCalendarViewModel
+    .init()
+    .then(() => {
+      const state = activeCalendarViewModel.getState();
+
+      if (state.error) {
+        container.innerHTML = "";
+        renderError(state.error);
+        return;
+      }
+
+      renderReady();
+    })
+    .catch(error => {
+      container.innerHTML = "";
+      renderError(error);
     });
-  }
-
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-  const wrapper = document.createElement("section");
-  wrapper.className = "calendar";
-  wrapper.setAttribute("aria-label", "Kalendervy över uppgifter");
-
-  // ── Header ──
-  wrapper.append(buildHeader(container));
-
-  // ── Toolbar: filter + iCal ──
-  wrapper.append(buildToolbar(people, container));
-
-  // ── Render mode ──
-  if (isMobile()) {
-    wrapper.append(buildAgendaView(tasks, importedEvents, todayStr));
-  } else {
-    wrapper.append(buildGridView(tasks, importedEvents, todayStr));
-  }
-
-  // ── Legend ──
-  const legend = document.createElement("div");
-  legend.className = "calendar-legend";
-  legend.setAttribute("aria-hidden", "true");
-  legend.innerHTML = `
-    <span class="legend-item"><span class="legend-dot cal-todo"></span>Att göra</span>
-    <span class="legend-item"><span class="legend-dot cal-progress"></span>Pågår</span>
-    <span class="legend-item"><span class="legend-dot cal-done"></span>Klar</span>
-    <span class="legend-item"><span class="legend-dot cal-ical"></span>Extern (iCal)</span>
-  `;
-  wrapper.append(legend);
-
-  container.append(wrapper);
-
-  if (focusId) {
-    const el = document.getElementById(focusId);
-    if (el) el.focus();
-  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -201,7 +265,12 @@ function buildHeader(container) {
     onClick: () => {
       currentMonth--;
       if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-      renderCalendar(container, "cal-prev-btn");
+
+      renderCalendar(container, {
+        calendarViewModel: activeCalendarViewModel,
+        focusId: "cal-prev-btn"
+      });
+
       announceMessage(`Visar ${MONTH_NAMES[currentMonth]} ${currentYear}`);
     }
   });
@@ -212,7 +281,12 @@ function buildHeader(container) {
     onClick: () => {
       currentMonth++;
       if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-      renderCalendar(container, "cal-next-btn");
+
+      renderCalendar(container, {
+        calendarViewModel: activeCalendarViewModel,
+        focusId: "cal-next-btn"
+      });
+
       announceMessage(`Visar ${MONTH_NAMES[currentMonth]} ${currentYear}`);
     }
   });
@@ -222,7 +296,12 @@ function buildHeader(container) {
     ariaLabel: "Gå till nuvarande månad",
     onClick: () => {
       initCurrentDate();
-      renderCalendar(container, "cal-today-btn");
+
+      renderCalendar(container, {
+        calendarViewModel: activeCalendarViewModel,
+        focusId: "cal-today-btn"
+      });
+
       announceMessage(`Visar dagens månad: ${MONTH_NAMES[currentMonth]} ${currentYear}`);
     }
   });
@@ -281,10 +360,14 @@ function buildToolbar(people, container) {
 
   filterSelect.onchange = () => {
     calendarFilter = filterSelect.value;
-    renderCalendar(container, "cal-team-filter");
+
+    renderCalendar(container, {
+      calendarViewModel: activeCalendarViewModel,
+      focusId: "cal-team-filter"
+    });
+
     announceMessage(`Filtrerar: ${calendarFilter === "Alla" ? "Hela teamet" : calendarFilter}`);
   };
-
   toolbar.append(filterLabel, filterSelect);
 
   // iCal buttons
@@ -302,7 +385,9 @@ function buildToolbar(people, container) {
     const events = parseICS(text);
     if (events.length > 0) {
       saveImportedEvents(events);
-      renderCalendar(container);
+      renderCalendar(container, {
+        calendarViewModel: activeCalendarViewModel
+      });
       announceMessage(`Importerade ${events.length} händelser`);
     } else {
       alert("Inga händelser hittades i filen.");
@@ -320,7 +405,7 @@ function buildToolbar(people, container) {
     text: "📤 Export", className: "calendar-ical-btn", id: "cal-export-ics",
     ariaLabel: "Exportera uppgifter som iCal-fil",
     onClick: () => {
-      const allTasks = loadState().tasks || [];
+      const allTasks = activeCalendarViewModel?.getExportTasks?.() ?? [];
       downloadICS(exportTasksToICS(allTasks));
       announceMessage("Kalender exporterad som .ics");
     }
@@ -499,7 +584,7 @@ function buildAgendaView(tasks, importedEvents, todayStr) {
         <span class="agenda-item-status">${task.status}</span>
       `;
 
-      const openEdit = () => addTaskDialog(task);
+      const openEdit = () => openCalendarTask(task);
       item.addEventListener("click", openEdit);
       item.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(); }
@@ -696,7 +781,10 @@ function showDayPopup(anchorCell, tasks, events, dateStr, dayNum) {
         li.setAttribute("aria-label", `Redigera: ${item.data.title}`);
         li.append(dot, title);
 
-        const openEdit = () => { popup.remove(); addTaskDialog(item.data); };
+        const openEdit = () => {
+          popup.remove();
+          openCalendarTask(item.data);
+        };
         li.addEventListener("click", openEdit);
         li.addEventListener("keydown", (e) => {
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(); }

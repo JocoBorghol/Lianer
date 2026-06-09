@@ -46,7 +46,6 @@ export const activityApi = Object.freeze({
             body: {
                 description: requestBody.description,
                 assignedTo: requestBody.assignedTo ?? null,
-                createdBy: requestBody.createdBy,
                 startDate: requestBody.startDate ?? null,
                 endDate: requestBody.endDate ?? null,
                 status: requestBody.status ?? null
@@ -71,15 +70,15 @@ export const activityApi = Object.freeze({
         });
     },
 
-    delete(id) {
-        validateGuid(id);
+        delete(id) {
+            validateGuid(id);
 
-        return apiRequest(TARGET, ApiEndpoints.activities.byId(id), {
-            method: "DELETE",
-            auth: true
-        });
-    }
-});
+            return apiRequest(TARGET, ApiEndpoints.activities.byId(id), {
+                method: "DELETE",
+                auth: true
+            });
+        }
+    });
 
 function withQuery(path, query) {
     const params = new URLSearchParams();
@@ -101,7 +100,6 @@ function validateCreateActivity(requestBody) {
 
     assertRequiredString(requestBody.description, "description");
     assertNullableGuid(requestBody.assignedTo, "assignedTo");
-    validateGuid(requestBody.createdBy);
     assertNullableDateString(requestBody.startDate, "startDate");
     assertNullableDateString(requestBody.endDate, "endDate");
     assertNullableNumber(requestBody.status, "status");

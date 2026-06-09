@@ -1,185 +1,213 @@
-import { jest } from '@jest/globals';
+import { jest } from "@jest/globals";
 
 const flushAllPromises = async () => {
-    for (let i = 0; i < 10; i++) await new Promise(process.nextTick);
+  for (let i = 0; i < 10; i++) await new Promise(process.nextTick);
 };
 
 let renderDashboard;
-let loadState;
-let initContactsDB;
-let getAllContacts;
 
 describe("dashboardView", () => {
-    let container;
+  let container;
+  let state;
+  let contacts;
+  let dashboardViewModel;
 
-    beforeEach(async () => {
-        container = document.createElement("div");
-        document.body.appendChild(container);
-        localStorage.clear();
+  beforeEach(async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    localStorage.clear();
 
-        jest.resetModules();
-        jest.clearAllMocks();
+    jest.resetModules();
+    jest.clearAllMocks();
 
-        const mockStorage = {
-            loadState: jest.fn()
-        };
+    state = {
+      people: ["Ingen", "Anna", "Björn"],
+      settings: {
+        teamName: "Test Team",
+        weeklyTarget: 5,
+        weeklyCRMTarget: 5
+      },
+      tasks: [
+        { id: 1, title: "Task 1", status: "Att göra", assigned: "Anna" },
+        { id: 2, title: "Task 2", status: "Pågår", assigned: "Björn" },
+        {
+          id: 3,
+          title: "Task 3",
+          status: "Klar",
+          assigned: "Anna",
+          completedDate: new Date().toISOString()
+        },
+        { id: 4, title: "Unassigned", status: "Att göra", assigned: "Ingen" }
+      ]
+    };
 
-        const mockContactsDb = {
-            initContactsDB: jest.fn(),
-            getAllContacts: jest.fn()
-        };
+    contacts = [
+      {
+        id: 1,
+        name: "Customer 1",
+        company: "Corp",
+        status: "Klar",
+        assignedTo: "Anna",
+        completedAt: new Date().toISOString()
+      },
+      {
+        id: 2,
+        name: "Customer 2",
+        status: "Ej kontaktad",
+        assignedTo: "Björn"
+      },
+      {
+        id: 3,
+        name: "Customer 3",
+        status: "Pågående",
+        assignedTo: "Ingen"
+      }
+    ];
 
-        jest.unstable_mockModule("../js/storage.js", () => mockStorage);
-        jest.unstable_mockModule("../js/utils/contactsDb.js", () => mockContactsDb);
+    dashboardViewModel = {
+      init: jest.fn().mockResolvedValue(),
+      refresh: jest.fn().mockResolvedValue(),
+      getViewState: jest.fn().mockReturnValue({ error: null }),
+      getDashboardState: jest.fn(() => state),
+      getContacts: jest.fn(() => contacts)
+    };
 
-        const view = await import("../js/views/dashboardView.js");
-        renderDashboard = view.renderDashboard;
+    const view = await import("../js/views/dashboard/dashboardView.js");
+    renderDashboard = view.renderDashboard;
+  });
 
-        loadState = mockStorage.loadState;
-        initContactsDB = mockContactsDb.initContactsDB;
-        getAllContacts = mockContactsDb.getAllContacts;
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
 
-        // Default mocks
-        loadState.mockReturnValue({
-            people: ["Ingen", "Anna", "Björn"],
-            settings: {
-                teamName: "Test Team",
-                weeklyTarget: 5,
-                weeklyCRMTarget: 5
-            },
-            tasks: [
-                { id: 1, title: "Task 1", status: "Att göra", assigned: "Anna" },
-                { id: 2, title: "Task 2", status: "Pågår", assigned: "Björn" },
-                { id: 3, title: "Task 3", status: "Klar", assigned: "Anna", completedDate: new Date().toISOString() },
-                { id: 4, title: "Unassigned", status: "Att göra", assigned: "Ingen" }
-            ]
-        });
+  test("Renders Team Dashboard by default", async () => {
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-        initContactsDB.mockResolvedValue();
-        getAllContacts.mockResolvedValue([
-            { id: 1, name: "Customer 1", company: "Corp", status: "Klar", assignedTo: "Anna", completedAt: new Date().toISOString() },
-            { id: 2, name: "Customer 2", status: "Ej kontaktad", assignedTo: "Björn" },
-            { id: 3, name: "Customer 3", status: "Pågående", assignedTo: "Ingen" }
-        ]);
-    });
+    const filterSelect = container.querySelector(".taskFilterSelect");
+    expect(filterSelect.value).toBe("Team");
 
-    afterEach(() => {
-        document.body.innerHTML = '';
-    });
+    const headings = Array.from(container.querySelectorAll("h3")).map(
+      h => h.textContent
+    );
 
-    test("Renders Team Dashboard by default", async () => {
-        await renderDashboard(container);
-        await flushAllPromises();
+    expect(headings).toContain("Test Team – Uppgifter");
+    expect(headings).toContain("Test Team – CRM");
 
-        // Controls
-        const filterSelect = container.querySelector(".taskFilterSelect");
-        expect(filterSelect.value).toBe("Team");
+    const taskBox = container.querySelectorAll(".dashboard-box")[0];
+    expect(taskBox.textContent).toContain("Totalt: 4");
+    expect(taskBox.textContent).toContain("Lediga: 1");
 
-        // Headings
-        const headings = Array.from(container.querySelectorAll("h3")).map(h => h.textContent);
-        expect(headings).toContain("Test Team – Uppgifter");
-        expect(headings).toContain("Test Team – CRM");
+    const crmBox = container.querySelectorAll(".dashboard-box")[1];
+    expect(crmBox.textContent).toContain("Totalt: 3");
+    expect(crmBox.textContent).toContain("Lediga: 1");
+  });
 
-        // Task stats
-        const taskBox = container.querySelectorAll(".dashboard-box")[0];
-        expect(taskBox.textContent).toContain("Totalt: 4");
-        expect(taskBox.textContent).toContain("Lediga: 1");
+  test("Renders specific person Dashboard", async () => {
+    localStorage.setItem("dashboardViewFilter", "Anna");
 
-        // CRM stats
-        const crmBox = container.querySelectorAll(".dashboard-box")[1];
-        expect(crmBox.textContent).toContain("Totalt: 3");
-        expect(crmBox.textContent).toContain("Lediga: 1");
-    });
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-    test("Renders specific person Dashboard", async () => {
-        localStorage.setItem("dashboardViewFilter", "Anna");
-        await renderDashboard(container);
-        await flushAllPromises();
+    const headings = Array.from(container.querySelectorAll("h3")).map(
+      h => h.textContent
+    );
 
-        // Should show Team and Anna (because Team is always shown in addition if specific person selected)
-        const headings = Array.from(container.querySelectorAll("h3")).map(h => h.textContent);
-        expect(headings).toContain("Test Team – Uppgifter");
-        expect(headings).toContain("Anna – Uppgifter");
-    });
+    expect(headings).toContain("Test Team – Uppgifter");
+    expect(headings).toContain("Anna – Uppgifter");
+  });
 
-    test("Renders ALL Dashboards", async () => {
-        localStorage.setItem("dashboardViewFilter", "ALLA");
-        await renderDashboard(container);
-        await flushAllPromises();
+  test("Renders ALL Dashboards", async () => {
+    localStorage.setItem("dashboardViewFilter", "ALLA");
 
-        const headings = Array.from(container.querySelectorAll("h3")).map(h => h.textContent);
-        expect(headings).toContain("Anna – Uppgifter");
-        expect(headings).toContain("Björn – Uppgifter");
-    });
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-    test("Toggles favorites", async () => {
-        localStorage.setItem("dashboardViewFilter", "Team");
-        await renderDashboard(container);
-        await flushAllPromises();
+    const headings = Array.from(container.querySelectorAll("h3")).map(
+      h => h.textContent
+    );
 
-        // Team doesn't have a star, so switch to ALLA to see Anna's star
-        localStorage.setItem("dashboardViewFilter", "ALLA");
-        await renderDashboard(container);
-        await flushAllPromises();
+    expect(headings).toContain("Anna – Uppgifter");
+    expect(headings).toContain("Björn – Uppgifter");
+  });
 
-        const starBtns = container.querySelectorAll(".dashboard-star");
-        expect(starBtns.length).toBeGreaterThan(0);
+  test("Toggles favorites", async () => {
+    localStorage.setItem("dashboardViewFilter", "ALLA");
 
-        // Click Anna's star
-        starBtns[0].click();
-        await flushAllPromises();
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-        const favs = JSON.parse(localStorage.getItem("dashboard:favorites"));
-        expect(favs.length).toBe(1);
+    const starBtns = container.querySelectorAll(".dashboard-star");
+    expect(starBtns.length).toBeGreaterThan(0);
 
-        // Switch filter back to Team and verify Anna is shown alongside Team
-        localStorage.setItem("dashboardViewFilter", "Team");
-        await renderDashboard(container);
-        await flushAllPromises();
+    starBtns[0].click();
+    await flushAllPromises();
 
-        const headings = Array.from(container.querySelectorAll("h3")).map(h => h.textContent);
-        expect(headings).toContain("Anna – Uppgifter");
-    });
+    const favs = JSON.parse(localStorage.getItem("dashboard:favorites"));
+    expect(favs.length).toBe(1);
 
-    test("Expands status details", async () => {
-        await renderDashboard(container);
-        await flushAllPromises();
+    localStorage.setItem("dashboardViewFilter", "Team");
 
-        const secondGroup = container.querySelectorAll(".status-group")[1]; // Att göra
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-        const toggle = secondGroup.querySelector(".status-toggle");
-        toggle.click();
-        await flushAllPromises();
+    const headings = Array.from(container.querySelectorAll("h3")).map(
+      h => h.textContent
+    );
 
-        expect(secondGroup.classList.contains("open")).toBe(true);
-        toggle.click();
-        expect(secondGroup.classList.contains("open")).toBe(false);
-    });
+    expect(headings).toContain("Anna – Uppgifter");
+  });
 
-    test("Handles CRM loading failure gracefully", async () => {
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
-        getAllContacts.mockRejectedValue(new Error("DB failed"));
-        await renderDashboard(container);
-        await flushAllPromises();
+  test("Expands status details", async () => {
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-        const crmBoxes = container.querySelectorAll(".dashboard-box.placeholder");
-        expect(crmBoxes.length).toBeGreaterThan(0); // Placeholder container remains, but its content is updated
+    const secondGroup = container.querySelectorAll(".status-group")[1];
+    const toggle = secondGroup.querySelector(".status-toggle");
 
-        const crmContents = container.innerHTML;
-        expect(crmContents).toContain("Kunde inte ladda CRM-data");
+    toggle.click();
+    await flushAllPromises();
 
-        consoleSpy.mockRestore();
-    });
+    expect(secondGroup.classList.contains("open")).toBe(true);
+
+    toggle.click();
+
+    expect(secondGroup.classList.contains("open")).toBe(false);
+  });
+
+  test("Handles dashboard loading failure gracefully", async () => {
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    dashboardViewModel.init.mockRejectedValue(new Error("Dashboard failed"));
+
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
+
+    expect(container.innerHTML).toContain("Kunde inte ladda dashboard-data.");
+    expect(container.innerHTML).toContain("Dashboard failed");
+
+    consoleSpy.mockRestore();
+  });
 
     test("Changes dashboard view filter", async () => {
-        await renderDashboard(container);
-        await flushAllPromises();
+    await renderDashboard(container, { dashboardViewModel });
+    await flushAllPromises();
 
-        const filterSelect = container.querySelector(".taskFilterSelect");
-        filterSelect.value = "Anna";
-        filterSelect.dispatchEvent(new Event("change"));
+    const filterSelect = container.querySelector(".taskFilterSelect");
 
-        await flushAllPromises();
-        expect(localStorage.getItem("dashboardViewFilter")).toBe("Anna");
+    expect(filterSelect).not.toBeNull();
+
+    const personOption = Array.from(filterSelect.options).find(
+        option => !["Team", "ALLA"].includes(option.value)
+    );
+
+    expect(personOption).toBeDefined();
+
+    filterSelect.value = personOption.value;
+    filterSelect.dispatchEvent(new Event("change", { bubbles: true }));
+
+    await flushAllPromises();
+
+    expect(localStorage.getItem("dashboardViewFilter")).toBe(personOption.value);
     });
 });
