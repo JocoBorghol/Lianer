@@ -21,7 +21,10 @@ import { ContactService } from "./js/views/ContactService.js";
 import { ContactViewModel } from "./js/views/ContactsViewModel.js";
 import { contactApi } from "./js/api/dev/Endpoints/contactApi.js";
 import { DashboardViewModel } from "./js/views/dashboard/DashboardViewModel.js";
+import { leadApi } from "./js/api/dev/Endpoints/leadApi.js";
 
+import { LeadStore } from "./js/api/dev/Service/LeadStore.js";
+import { LeadService } from "./js/api/dev/Service/LeadService.js";
 /**
  * @file app.js
  * @description Huvudentrépunkt för Lianer Project Management App.
@@ -92,10 +95,16 @@ function startApplicationShell() {
     contactApi,
     contactStore
   });
+  const leadStore = new LeadStore();
 
+  const leadService = new LeadService({
+    leadApi,
+    leadStore
+  });
   const contactViewModel = new ContactViewModel({
     contactService,
-    userService
+    userService,
+    leadService
   });
   const taskScreenViewModel = new TaskScreenViewModel({
     activityService,
@@ -124,6 +133,8 @@ function startApplicationShell() {
     taskScreenViewModel,
     calendarViewModel,
     contactViewModel,
+    leadStore,
+    leadService,
     dashboardViewModel
   };
 

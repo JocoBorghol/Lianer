@@ -49,6 +49,7 @@ export default {
     "!js/data/tasks.js",
     "!js/**/*.test.js",
     "!js/card/**",
+    "!js/contacts/**",
     "!js/taskList/taskScreen.js",
     "!js/comps/dialog.js",
     "!js/menu/**",

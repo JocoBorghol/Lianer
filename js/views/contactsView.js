@@ -11,7 +11,10 @@ import {
   groupAlphabetically
 } from "../utils/contactsDb.js";
 import { loadState } from "../storage.js";
+ import { createContactLeadsPanel } from "./contacts/contactLeadsTabs.js";
 
+let activeContactsTab = "contacts";
+ 
 
 let selectedContactId = null;
 let isMobileDetailOpen = false;
@@ -182,7 +185,15 @@ export const renderContacts = async (container, params = null, options = {}) => 
 
   container.innerHTML = "";
 
+  const pageTabs = createContactsTabs(container, params, options);
+  container.append(pageTabs);
+
   loadVendorScripts();
+
+  if (activeContactsTab === "leads") {
+    await renderLeadsTab(container);
+    return;
+  }
 
   try {
     allContacts = currentSearchTerm
@@ -1338,7 +1349,55 @@ function openContactModal(contact, container, shell, master) {
   // Autofocus
   inputs.name.focus();
 }
+function createContactsTabs(container, params, options) {
+  const tabs = document.createElement("div");
+  tabs.className = "contacts-actions";
+  tabs.style.marginBottom = "12px";
+  tabs.style.display = "flex";
+  tabs.style.gap = "8px";
+  tabs.style.flexWrap = "wrap";
 
+  const contactsBtn = document.createElement("button");
+  contactsBtn.textContent = "Kontakter";
+  contactsBtn.className = activeContactsTab === "contacts" ? "active" : "";
+
+  const leadsBtn = document.createElement("button");
+  leadsBtn.textContent = "Leads";
+  leadsBtn.className = activeContactsTab === "leads" ? "active" : "";
+
+  contactsBtn.style.borderColor =
+    activeContactsTab === "contacts"
+      ? "var(--accent-cyan)"
+      : "var(--border)";
+
+  leadsBtn.style.borderColor =
+    activeContactsTab === "leads"
+      ? "var(--accent-cyan)"
+      : "var(--border)";
+
+  contactsBtn.onclick = () => {
+    activeContactsTab = "contacts";
+    renderContacts(container, params, options);
+  };
+
+  leadsBtn.onclick = () => {
+    activeContactsTab = "leads";
+    renderContacts(container, params, options);
+  };
+
+  tabs.append(contactsBtn, leadsBtn);
+  return tabs;
+}
+async function renderLeadsTab(container) {
+  const panel = createContactLeadsPanel({
+    contactViewModel: activeContactViewModel
+  });
+
+  container.append(panel);
+}
+ 
+
+ 
 // ===================================================================
 // CSV IMPORT MODAL
 // ===================================================================
