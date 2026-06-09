@@ -21,6 +21,7 @@ import { ContactService } from "./js/views/ContactService.js";
 import { ContactViewModel } from "./js/views/ContactsViewModel.js";
 import { contactApi } from "./js/api/dev/Endpoints/contactApi.js";
 import { DashboardViewModel } from "./js/views/dashboard/DashboardViewModel.js";
+import { authService } from "./js/api/dev/Service/AuthService.js";
 
 /**
  * @file app.js
@@ -41,7 +42,40 @@ window.lianerSmokeTests = Object.freeze({
 });
 
  
-showAuthScreen();
+// 1. Kolla om URL-hashen innehåller en Google access token
+const urlHash = window.location.hash;
+
+if (urlHash.includes("access_token=")) {
+  // Extrahera token från hashen (allt efter #)
+  const params = new URLSearchParams(urlHash.substring(1));
+  const accessToken = params.get("access_token");
+
+  // Rensa omedelbart URL:en så att token inte ligger kvar synlig i adressfältet
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  console.log("Hittade Google-token, validerar med backend...");
+
+  // Skicka token till backend via er AuthService
+  if (accessToken) {
+    authService.loginWithGoogleAccessToken(accessToken)
+      .then(() => {
+        console.log("Google SSO lyckades!");
+        // Starta applikationsskalet om backend godkände token
+        startApplicationShell();
+      })
+      .catch((err) => {
+        console.error("Kunde inte logga in med Google SSO:", err);
+        // Om backend nekar eller något går fel, visa vanliga inloggningen
+        showAuthScreen();
+      });
+  } else {
+    console.error("access_token hittades inte i URL-hashen");
+    showAuthScreen();
+  }
+} else {
+  // Flöde för när ingen Google-callback sker: Visa vanliga skärmen direkt
+  showAuthScreen();
+}
 
 window.addEventListener("authFormSubmitted", (event) => {
   console.log("Auth form submitted:", event.detail);
