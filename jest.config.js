@@ -28,6 +28,7 @@ export default {
     "/js/views/dashboard/DashboardViewModel.js",
     "/js/views/ContactService.js",
     "/js/views/ContactStore.js",
+    "/js/views/contacts",
     "/js/taskList/taskBoard.js",
     "/js/taskList/dayView.js",
     "/js/taskList/weekView.js",
@@ -71,7 +72,7 @@ export default {
     "!js/taskList/weekView.js",
     "!js/taskList/dateHelpers.js",
     "!js/taskList/emptyState.js",
-
+    "!js/views/contacts/contactLeadsTabs.js",
     "!**/node_modules/**",
     "!**/dist/**",
     "!**/docs/**"
