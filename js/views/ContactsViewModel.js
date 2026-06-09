@@ -17,17 +17,19 @@ const UI_TO_CONTACT_STATUS = Object.freeze({
 export class ContactViewModel {
   #contactService;
   #userService;
-
+  #leadService;
   #users = [];
   #isLoaded = false;
   #isLoading = false;
   #error = null;
 
-  constructor({ contactService, userService = null }) {
-    if (!contactService) {
+    constructor({ contactService, userService = null, leadService = null }) {    
+    
+    if (!contactService) 
+    {
       throw new Error("ContactViewModel requires a contactService.");
     }
-
+    this.#leadService = leadService;
     this.#contactService = contactService;
     this.#userService = userService;
   }
@@ -76,6 +78,169 @@ export class ContactViewModel {
       error: this.#error
     };
   }
+
+
+hasLeadService() {
+  return Boolean(this.#leadService);
+}
+
+async loadLeads(query = {}) {
+  this.#assertLeadService();
+
+  const leads = await this.#leadService.loadLeads(query);
+
+  return leads.map(lead => this.#toLeadViewShape(lead));
+}
+
+getLeads() {
+  if (!this.#leadService) return [];
+
+  return this.#leadService
+    .getLeads()
+    .map(lead => this.#toLeadViewShape(lead));
+}
+
+searchLeads(searchTerm = "") {
+  if (!this.#leadService) return [];
+
+  return this.#leadService
+    .searchLeads(searchTerm)
+    .map(lead => this.#toLeadViewShape(lead));
+}
+
+getLeadPaging() {
+  if (!this.#leadService?.getPaging) {
+    return {
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0
+    };
+  }
+
+  return this.#leadService.getPaging();
+}
+
+async enrichLeadDomain(domain) {
+  this.#assertLeadService();
+
+  const enriched = await this.#leadService.enrichDomain(domain);
+
+  return this.#toLeadViewShape(enriched);
+}
+
+async importLeadDomain(domain) {
+  this.#assertLeadService();
+
+  const imported = await this.#leadService.importDomain(domain);
+
+  return imported
+    ? this.#toLeadViewShape(imported)
+    : null;
+}
+
+async getLeadDetails(id) {
+  this.#assertLeadService();
+
+  const details = await this.#leadService.getLeadDetails(id);
+
+  return this.#toLeadViewShape(details);
+}
+
+async assignLead(leadId, userId) {
+  this.#assertLeadService();
+
+  const assigned = await this.#leadService.assignLead(leadId, userId);
+
+  return assigned
+    ? this.#toLeadViewShape(assigned)
+    : null;
+}
+
+#assertLeadService() {
+  if (!this.#leadService) {
+    throw new Error("ContactViewModel has no leadService.");
+  }
+}
+
+#toLeadViewShape(lead = {}) {
+  if (!lead) return null;
+
+  const id =
+    lead.id
+    ?? lead.leadId
+    ?? lead.Id
+    ?? lead.LeadId
+    ?? null;
+
+  const domain =
+    lead.domain
+    ?? lead.Domain
+    ?? "";
+
+  const company =
+    lead.company
+    ?? lead.Company
+    ?? lead.organization
+    ?? lead.Organization
+    ?? "";
+
+  const email =
+    lead.email
+    ?? lead.Email
+    ?? "";
+
+  const phone =
+    lead.phone
+    ?? lead.Phone
+    ?? "";
+
+  const status =
+    lead.status
+    ?? lead.Status
+    ?? "";
+
+  const createdAt =
+    lead.createdAt
+    ?? lead.CreatedAt
+    ?? lead.created
+    ?? lead.Created
+    ?? null;
+
+  const confidence =
+    lead.confidence
+    ?? lead.Confidence
+    ?? lead.score
+    ?? lead.Score
+    ?? null;
+
+  const assignedTo =
+    lead.assignedTo
+    ?? lead.AssignedTo
+    ?? null;
+
+  return {
+    id,
+    domain,
+    company,
+    name:
+      lead.name
+      ?? lead.Name
+      ?? company
+      ?? domain
+      ?? "Namnlös lead",
+
+    email: Array.isArray(email) ? email : [email].filter(Boolean),
+    phone: Array.isArray(phone) ? phone : [phone].filter(Boolean),
+
+    status,
+    createdAt,
+    confidence,
+    assignedTo,
+
+    rawLead: lead
+  };
+}
 
   getAssignableUsers() {
     const users = this.#users

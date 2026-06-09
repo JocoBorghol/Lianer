@@ -786,3 +786,59 @@ body.dark-mode .detail-qr-label {
     letter-spacing: 0.5px;
   }
 }
+/* ===== CONTACT LEADS TAB ===== */
+
+.contacts-leads-shell {
+  height: calc(100vh - 150px);
+  overflow: hidden;
+}
+
+.contacts-leads-shell .contacts-leads-panel {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  box-sizing: border-box;
+  padding: 28px;
+  border-radius: 12px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.contacts-leads-panel h2 {
+  margin: 0 0 8px 0;
+}
+
+.contacts-leads-panel p {
+  margin: 0 0 18px 0;
+}
+
+.contacts-leads-panel .contacts-actions {
+  padding: 0;
+  border-bottom: none;
+  margin-bottom: 16px;
+}
+
+.contacts-leads-panel .contacts-count {
+  text-align: left;
+  padding: 10px 0 12px 0;
+  border-top: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.contacts-leads-panel .contacts-list {
+  margin-top: 12px;
+  min-height: 280px;
+}
+
+@media (min-width: 768px) {
+  .contacts-leads-shell {
+    flex-direction: row;
+  }
+
+  .contacts-leads-shell .contacts-leads-panel {
+    width: 100%;
+    min-width: 0;
+    border-radius: 12px;
+    border-right: 1px solid var(--border);
+  }
+}

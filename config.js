@@ -79,7 +79,7 @@
                  * @description Base URL for the features backend api.
                  */
                 baseUrl: isLocalhost
-                    ? "http://localhost:5001"
+                    ? "http://localhost:5266"
                     : "https://lianer-features-api.icybush-5ce7e353.italynorth.azurecontainerapps.io"
             }
         },
