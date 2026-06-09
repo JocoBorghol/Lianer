@@ -56,6 +56,8 @@ export default {
     "!js/repo/**",
     "!js/api/dev/**",
     "!js/api/e2e/**",
+    "!js/api/agentApi.js",
+    "!js/views/agentView.js",
 
     "!js/taskList/TaskScreenViewModel.js",
     "!js/views/ContactsViewModel.js",
