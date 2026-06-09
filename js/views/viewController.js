@@ -3,6 +3,7 @@ import { taskScreen } from "../taskList/taskScreen.js";
 import { renderSettings } from "./settingsView.js"; 
 import { renderContacts } from "./contactsView.js";
 import { renderDashboard } from "./dashboard/dashboardView.js";
+import { renderAgentView } from "./agentView.js";
 
 export class ViewController {
   constructor(target, services = {}) {
@@ -90,6 +91,11 @@ export class ViewController {
       });
 
       this.params = null;
+      return;
+    }
+
+    if (this.activeView === "agent") {
+      renderAgentView(this.container);
       return;
     }
   }

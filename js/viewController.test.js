@@ -45,6 +45,9 @@ describe("viewController", () => {
     jest.unstable_mockModule("../js/taskList/taskScreen.js", () => mockTasks);
     jest.unstable_mockModule("../js/views/settingsView.js", () => mockSettings);
     jest.unstable_mockModule("../js/views/contactsView.js", () => mockContacts);
+    jest.unstable_mockModule("../js/views/agentView.js", () => ({
+      renderAgentView: jest.fn()
+    }));
 
     const module = await import("../js/views/viewController.js");
     const ViewController = module.ViewController;
