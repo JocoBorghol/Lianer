@@ -195,8 +195,12 @@ describe("dashboardView", () => {
 
     const filterSelect = container.querySelector(".taskFilterSelect");
 
+    expect(
+    Array.from(filterSelect.options).map(option => option.value)
+    ).toContain("Anna");
+
     filterSelect.value = "Anna";
-    filterSelect.dispatchEvent(new Event("change"));
+    filterSelect.dispatchEvent(new Event("change", { bubbles: true }));
 
     await flushAllPromises();
 
