@@ -8,7 +8,7 @@
 
 import { loadState, saveState } from "../storage.js";
 import { notify } from "../observer.js";
-import { loadDemoWorkspace, loadDemoLIA } from "../taskList/seed.js";
+import { loadDemoByKey } from "../taskList/seed.js";
 import { clearAllContacts, initContactsDB, getAllContacts, importContacts } from "../utils/contactsDb.js";
 import { showToast } from "../utils/toast.js";
 
@@ -18,7 +18,7 @@ import { showToast } from "../utils/toast.js";
  * @param {Function} rerenderCallback - Callback för att synka om hela appen.
  * @returns {void}
  */
-export function renderSettings(container, rerenderCallback) {
+export function renderSettings(container, rerenderCallback, taskService) {
   container.innerHTML = "";
   const state = loadState();
   const people = state.people || [];
@@ -81,7 +81,7 @@ export function renderSettings(container, rerenderCallback) {
     const row = document.createElement("div");
     row.className = "member-row";
     row.innerHTML = `
-        <input type="text" value="${name}" class="premium-input member-edit-input" spellcheck="false" placeholder="Namn..." aria-label="Medlemsnamn">
+        <input type="text" value="${name}" data-original-value="${name}" class="premium-input member-edit-input" spellcheck="false" placeholder="Namn..." aria-label="Medlemsnamn">
         <button class="settings-btn btn-delete-small" aria-label="Radera ${name || 'medlem'}">RADERA</button>
     `;
     row.querySelector(".btn-delete-small").onclick = () => {
@@ -141,26 +141,47 @@ export function renderSettings(container, rerenderCallback) {
 
   const demoRow = document.createElement("div");
   demoRow.className = "settings-action-row";
+  demoRow.style.flexWrap = "wrap";
+  demoRow.style.gap = "10px";
 
-  const loadWorkspaceBtn = document.createElement("button");
-  loadWorkspaceBtn.className = "settings-btn btn-load-demo";
-  loadWorkspaceBtn.textContent = "🚀 Demo Workspace";
-  loadWorkspaceBtn.setAttribute("aria-label", "Ladda demo med Tech/DevOps-data");
-  loadWorkspaceBtn.onclick = async () => {
-    await loadDemoWorkspace();
+  const demoOptions = [
+    { value: "lia",        label: "🎓 LIA-Chase" },
+    { value: "tech",       label: "💻 Tech & Dev" },
+    { value: "wedding",    label: "💍 Bröllopsplanering" },
+    { value: "sales",      label: "📞 Telemarketing / Sales" },
+    { value: "family",     label: "🏠 Familjepusslet" },
+    { value: "event",      label: "🎪 Eventkoordinator" },
+        { value: "realestate", label: "🏡 Fastighetsmäklare" },
+    { value: "ica",        label: "🛒 ICA-Butiken" },
+    { value: "rentfint",   label: "🧹 Städbolaget Rent & Fint" },
+    { value: "gym",        label: "🏋️ Gymmet" },
+    { value: "bygg",       label: "🔨 Byggbolaget" },
+  ];
+  const demoSelect = document.createElement("select");
+  demoSelect.className = "settings-input main-input";
+  demoSelect.setAttribute("aria-label", "Välj demoläge");
+  demoSelect.style.minWidth = "220px";
+  demoSelect.style.flex = "1";
+  demoOptions.forEach(opt => {
+    const o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.label;
+    demoSelect.append(o);
+  });
+
+  const loadDemoBtn = document.createElement("button");
+  loadDemoBtn.className = "settings-btn btn-load-demo";
+  loadDemoBtn.textContent = "🚀 Ladda demoläge";
+  loadDemoBtn.setAttribute("aria-label", "Ladda valt demoläge");
+  loadDemoBtn.onclick = async () => {
+    const key = demoSelect.value;
+    const label = demoOptions.find(o => o.value === key)?.label || key;
+    if (!confirm(`Varning: Detta ersätter all nuvarande data med valt demoläge (${label}). Fortsätt?`)) return;
+    await loadDemoByKey(key, taskService);
     if (rerenderCallback) rerenderCallback();
   };
 
-  const loadLiaBtn = document.createElement("button");
-  loadLiaBtn.className = "settings-btn btn-load-demo btn-load-lia";
-  loadLiaBtn.textContent = "🎓 Demo LIA-Chase";
-  loadLiaBtn.setAttribute("aria-label", "Ladda demo med LIA/praktikjakt-data");
-  loadLiaBtn.onclick = async () => {
-    await loadDemoLIA();
-    if (rerenderCallback) rerenderCallback();
-  };
-
-  demoRow.append(loadWorkspaceBtn, loadLiaBtn);
+  demoRow.append(demoSelect, loadDemoBtn);
   actionsContent.append(demoRow);
 
   // --- Backup-knappar ---
@@ -318,7 +339,7 @@ export function renderSettings(container, rerenderCallback) {
             icon: "/icons/icon-192.png",
           });
           showToast("Framgång (Fallback)", "Push-notis skickad utan Service Worker.");
-        } catch (fallbackErr) {
+        } catch {
           showToast("System Notis Misslyckades", `Windows/Webbläsare blockerade notisen.\nLäs konsolen för mer info.`);
         }
       }
@@ -413,22 +434,49 @@ export function renderSettings(container, rerenderCallback) {
     s.settings.weeklyTarget = newWeeklyTarget;
     s.settings.weeklyCRMTarget = newWeeklyCRMTarget;
 
-    const newPeople = memberRows
-      .map(r => r.querySelector("input").value.trim())
-      .filter(n => n !== "" && n.toLowerCase() !== "ingen");
+    const newPeopleInputs = memberRows.map(r => r.querySelector("input"));
+    const newPeople = [];
+    const nameMap = {};
+
+    newPeopleInputs.forEach(input => {
+      const newName = input.value.trim();
+      const oldName = input.getAttribute("data-original-value");
+      if (newName !== "" && newName.toLowerCase() !== "ingen") {
+        newPeople.push(newName);
+        if (oldName && oldName !== newName && oldName.toLowerCase() !== "ingen") {
+          nameMap[oldName] = newName;
+        }
+      }
+    });
 
     if (!newPeople.includes("Ingen")) {
       newPeople.unshift("Ingen");
     }
 
     s.people = newPeople;
+
+    // Update existing tasks with renamed members
+    if (s.tasks && Object.keys(nameMap).length > 0) {
+      s.tasks = s.tasks.map(task => {
+        if (task.assigned && Array.isArray(task.assigned)) {
+          // Assigned is an array
+          const newAssignedArray = task.assigned.map(a => nameMap[a] || a);
+          return { ...task, assigned: newAssignedArray };
+        } else if (task.assigned && typeof task.assigned === 'string') {
+          // Assigned is a string
+          return { ...task, assigned: nameMap[task.assigned] || task.assigned };
+        }
+        return task;
+      });
+    }
+
     saveState(s);
     notify();
 
     if (rerenderCallback) {
       rerenderCallback();
     } else {
-      renderSettings(container, rerenderCallback);
+      renderSettings(container, rerenderCallback, taskService);
     }
   };
 

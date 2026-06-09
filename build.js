@@ -93,7 +93,7 @@ async function build() {
     console.log('Extracting critical CSS for inlining...');
     const variablesCss = fs.readFileSync(path.join(__dirname, 'css/variables.css'), 'utf8');
     const mainCssLines = fs.readFileSync(path.join(__dirname, 'css/main.css'), 'utf8').split('\n');
-    const criticalMainCss = mainCssLines.slice(0, 172).join('\n');
+    const criticalMainCss = mainCssLines.slice(0, 173).join('\n');
     const criticalCssRaw = variablesCss + '\n' + criticalMainCss;
     const criticalResult = await postcss([cssnano]).process(criticalCssRaw, { from: undefined });
     const criticalCssInline = criticalResult.css;
@@ -180,6 +180,9 @@ async function build() {
     }
     if (fs.existsSync(path.join(__dirname, 'icons'))) {
         copyDirSync(path.join(__dirname, 'icons'), path.join(distDir, 'icons'));
+    }
+    if (fs.existsSync(path.join(__dirname, 'docs'))) {
+        copyDirSync(path.join(__dirname, 'docs'), path.join(distDir, 'docs'));
     }
 
     console.log('Build completed successfully!');

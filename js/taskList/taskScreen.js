@@ -1,158 +1,173 @@
-import { loadState } from "../storage.js";
-import { taskList } from "../taskList/taskList.js";
 import { TASK_STATUSES } from "../status.js";
+import { openTaskDialog } from "../menu/openTaskDialog.js";
+import { taskList } from "../taskList/taskList.js";
+import { startOfWeekMonday, getWeekNumber } from "./dateHelpers.js";
+import { renderWeekView } from "./weekView.js";
+import { renderDayView } from "./dayView.js";
+import { createTaskFilterHeader } from "./taskFilterHeader.js";
+import { renderTaskBoard } from "./taskBoard.js";
 
-/**
- * @file taskScreen.js
- * @description Hanterar huvudskärmen för uppgifter (Kanban-vyn).
- * Inkluderar filter för team/medlemmar och stöd för flera ansvariga per uppgift.
- */
+export const taskScreen = ({
+    taskViewModel,
+    navigate,
+    currentDate,
+    onNavigateDate
+}) => {
+    const viewModel = taskViewModel;
+    const taskServiceAdapter = viewModel.getTaskServiceAdapter();
 
-/**
- * Skapar och returnerar huvudvyn för uppgiftshantering.
- * @returns {HTMLElement} Det sammansatta elementet för uppgiftsskärmen.
- */
-export const taskScreen = () => {
-  const state = loadState();
-  const people = state.people || []; // Array med strängar (namn)
-  
-  // Hämtar senast använda filter eller sätter standard till "Team"
-  let currentFilter = localStorage.getItem("taskViewFilter") || "Team";
+    let currentFilter = localStorage.getItem("taskViewFilter") || "Team";
+    let currentViewMode = localStorage.getItem("taskViewMode") || "board";
 
-  const screenWrapper = document.createElement("main");
-  screenWrapper.classList.add("taskScreenWrapper");
-  screenWrapper.setAttribute("aria-label", "Projekttavla");
+    const screenWrapper = document.createElement("main");
+    screenWrapper.classList.add("taskScreenWrapper");
+    screenWrapper.setAttribute("aria-label", "Projekttavla");
 
-  const contentArea = document.createElement("div");
-  contentArea.classList.add("taskContentArea");
+    const renderLoading = () => {
+        screenWrapper.innerHTML = "";
 
-  // ---------- FILTERKONTROLLER (Semantisk Header) ----------
-  const filterHeader = document.createElement("header");
-  filterHeader.classList.add("taskFilterContainer");
+        const loading = document.createElement("div");
+        loading.className = "taskContentArea";
+        loading.innerHTML = `
+            <p class="emptyState">Laddar aktiviteter från API...</p>
+        `;
 
-  const filterLabel = document.createElement("label");
-  filterLabel.setAttribute("for", "task-filter-select");
-  filterLabel.classList.add("filterLabel");
-  filterLabel.textContent = "Visa uppgifter för: ";
+        screenWrapper.append(loading);
+    };
 
-  const select = document.createElement("select");
-  select.id = "task-filter-select";
-  select.tabIndex = 0;
-  select.classList.add("taskFilterSelect");
-  select.setAttribute("aria-controls", "task-board");
+    const renderError = (error) => {
+        screenWrapper.innerHTML = "";
 
-  // 1. Hela teamet
-  const teamOption = document.createElement("option");
-  teamOption.value = "Team";
-  teamOption.textContent = "Hela Teamet";
-  if (currentFilter === "Team") teamOption.selected = true;
-  select.append(teamOption);
+        const errorBox = document.createElement("div");
+        errorBox.className = "taskContentArea";
+        errorBox.innerHTML = `
+            <section class="emptyState" role="alert">
+                <h2>Kunde inte ladda aktiviteter</h2>
+                <p>${error?.message ?? "Okänt fel."}</p>
+            </section>
+        `;
 
-  const teamSeparator = document.createElement("option");
-  teamSeparator.disabled = true;
-  teamSeparator.textContent = "────────────────";
-  select.append(teamSeparator);
+        screenWrapper.append(errorBox);
+    };
 
-  // 2. Alla medlemmar (Hanterar datan som strängar nu!)
-  people.forEach(personName => {
-    const option = document.createElement("option");
-    option.value = personName; 
-    // Om personen är "Ingen", visa det snyggare i listan
-    option.textContent = (personName === "Ingen") ? "🟢 Lediga uppgifter" : personName;
-    
-    if (personName === currentFilter) option.selected = true;
-    select.append(option);
-  });
+    const renderReady = () => {
+        screenWrapper.innerHTML = "";
 
-  const archiveSeparator = document.createElement("option");
-  archiveSeparator.disabled = true;
-  archiveSeparator.textContent = "────────────────";
-  select.append(archiveSeparator);
+        const people = viewModel.getPeople();
 
-  // 3. Arkivet
-  const archiveOption = document.createElement("option");
-  archiveOption.value = "Arkiv";
-  archiveOption.textContent = "📁 Visa Stängda Uppgifter";
-  if (currentFilter === "Arkiv") archiveOption.selected = true;
-  select.append(archiveOption);
+        const contentArea = document.createElement("div");
+        contentArea.classList.add("taskContentArea");
 
-  /**
-   * Uppdaterar Kanban-tavlan baserat på valt filter.
-   * @param {string} selectedFilter - Namnet på personen, "Team" eller "Arkiv".
-   */
-  const updateView = (selectedFilter) => {
-    contentArea.innerHTML = ""; 
-
-    const latestState = loadState();
-    const tasks = latestState.tasks || [];
-
-    const board = document.createElement("div");
-    board.id = "task-board";
-    board.classList.add("taskBoard");
-    board.setAttribute("role", "region");
-    board.setAttribute("aria-live", "polite");
-
-    // LOGIK FÖR ARKIV-VY (VG: Focus Management)
-    if (selectedFilter === "Arkiv") {
-      const archiveColumn = document.createElement("section");
-      archiveColumn.className = "taskWrapper closed-tasks-archive";
-      archiveColumn.setAttribute("aria-label", "Stängda uppgifter");
-      
-      const closedTasks = tasks.filter(t => t.status === TASK_STATUSES.CLOSED);
-      archiveColumn.append(taskList(TASK_STATUSES.CLOSED, closedTasks));
-      
-      board.append(archiveColumn);
-    } 
-    // LOGIK FÖR KANBAN-VY (Hanterar array-logik för flera ansvariga som strängar)
-    else {
-      // Filtrerar uppgifter: Visa alla om "Team", annars kolla om personens namn finns i assignedTo-arrayen
-      const filteredTasks = selectedFilter === "Team" 
-        ? tasks 
-        : tasks.filter(t => {
-            // Kontrollera först i den nya arrayen, fallback till gamla 'assigned'
-            if (t.assignedTo && Array.isArray(t.assignedTo)) {
-              // Buggfix: 'Ledig' = tom array ELLER explicit "Ingen"
-              if (selectedFilter === "Ingen") {
-                return t.assignedTo.length === 0 || t.assignedTo.includes("Ingen");
-              }
-              return t.assignedTo.includes(selectedFilter);
+        const toolbar = createTaskFilterHeader({
+            people,
+            currentFilter,
+            currentViewMode,
+            onNavigateDate,
+            onFilterChange: (selectedFilter) => {
+                currentFilter = selectedFilter;
+                localStorage.setItem("taskViewFilter", currentFilter);
+                updateView(currentFilter);
+            },
+            onViewModeChange: (viewMode) => {
+                currentViewMode = viewMode;
+                localStorage.setItem("taskViewMode", viewMode);
+                updateView(currentFilter);
             }
-            return t.assigned === selectedFilter;
-          });
+        });
 
-      const activeStatuses = [TASK_STATUSES.TODO, TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.DONE];
-      
-      activeStatuses.forEach(status => {
-        const columnWrapper = document.createElement("section");
-        columnWrapper.classList.add("taskWrapper");
-        columnWrapper.setAttribute("data-status", status);
-        columnWrapper.setAttribute("aria-label", `Kolumn: ${status}`);
+        const updateNavigationLabel = () => {
+            if (currentViewMode === "week") {
+                const mon = startOfWeekMonday(currentDate);
+                const sun = new Date(mon);
+                sun.setDate(mon.getDate() + 6);
 
-        const columnTasks = filteredTasks.filter(t => t.status === status);
-        columnWrapper.append(taskList(status, columnTasks));
-        board.append(columnWrapper);
-      });
-    }
+                toolbar.dateLabel.textContent =
+                    `V. ${getWeekNumber(currentDate)} (${mon.getDate()}/${mon.getMonth() + 1} - ${sun.getDate()}/${sun.getMonth() + 1})`;
 
-    contentArea.append(board);
-  };
+                toolbar.navContainer.style.display = "flex";
+                return;
+            }
 
-  // Eventlyssnare för filterändring
-  select.addEventListener("change", (e) => {
-    const newFilter = e.target.value;
-    localStorage.setItem("taskViewFilter", newFilter);
-    updateView(newFilter);
-    setTimeout(() => {
-      const el = document.getElementById("task-filter-select");
-      if (el) el.focus();
-    }, 50);
-  });
+            if (currentViewMode === "day") {
+                toolbar.dateLabel.textContent = currentDate.toLocaleDateString("sv-SE", {
+                    day: "numeric",
+                    month: "long"
+                });
 
-  // Initial rendering
-  updateView(currentFilter);
+                toolbar.navContainer.style.display = "flex";
+                return;
+            }
 
-  filterHeader.append(filterLabel, select);
-  screenWrapper.append(filterHeader, contentArea);
+            toolbar.navContainer.style.display = "none";
+        };
 
-  return screenWrapper;
+        const updateView = (selectedFilter) => {
+            contentArea.innerHTML = "";
+
+            const allTasks = viewModel.getTasks();
+            const visibleTasks = viewModel.getVisibleTasks(selectedFilter);
+
+            updateNavigationLabel();
+
+            if (allTasks.length === 0 && selectedFilter !== "Arkiv") {
+                toolbar.filterHeader.style.display = "";
+
+                const empty = document.createElement("section");
+                empty.className = "emptyState";
+                empty.innerHTML = `
+                    <h2>Inga aktiviteter ännu</h2>
+                `;
+
+                contentArea.append(empty);
+                return;
+            }
+
+            toolbar.filterHeader.style.display = "";
+
+            if (currentViewMode === "week" && selectedFilter !== "Arkiv") {
+                contentArea.append(
+                    renderWeekView(visibleTasks, currentDate, taskServiceAdapter)
+                );
+                return;
+            }
+
+            if (currentViewMode === "day" && selectedFilter !== "Arkiv") {
+                contentArea.append(
+                    renderDayView(visibleTasks, currentDate, taskServiceAdapter)
+                );
+                return;
+            }
+
+            contentArea.append(renderTaskBoard({
+                tasks: allTasks,
+                selectedFilter,
+                taskService: taskServiceAdapter,
+                navigate,
+                taskList,
+                openTaskDialog,
+                TASK_STATUSES
+            }));
+        };
+
+        screenWrapper.append(toolbar.filterHeader, contentArea);
+        updateView(currentFilter);
+    };
+
+    renderLoading();
+
+    viewModel
+        .init()
+        .then(() => {
+            const state = viewModel.getState();
+
+            if (state.error) {
+                renderError(state.error);
+                return;
+            }
+
+            renderReady();
+        })
+        .catch(renderError);
+
+    return screenWrapper;
 };

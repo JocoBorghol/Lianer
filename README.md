@@ -10,11 +10,11 @@
 
 <p align="center">
   <br />
-  <a href="https://alexanderjson.github.io/K3---Projekt-i-team/">
+  <a href="https://jocoborghol.github.io/Lianer/">
     <img src="https://img.shields.io/badge/TRY_IT_LIVE-Visit_Application-brightgreen?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo">
   </a>
   <br />
-  <sub>Don't feel like reading? <strong><a href="https://alexanderjson.github.io/K3---Projekt-i-team/">Jump straight into the app!</a></strong></sub>
+  <sub>Don't feel like reading? <strong><a href="https://jocoborghol.github.io/Lianer/">Jump straight into the app!</a></strong></sub>
 </p>
 
 ---
@@ -94,65 +94,72 @@ Lianer allows teams to collaborate effectively using a classic **SCRUM-board** s
 
 To run this project locally, follow the steps below.
 
-Install dependencies
-
-```bash
-npm install
-
-```bash
-Build the project
-
-```bash
-npm run build
-
-```bash
-Serve the production build
-
-```bash
-npm run serve:dist
-
 ### Prerequisites
 
 - Node.js (v18 or higher recommended)
 - npm
-```
 
 ### Step-by-Step Setup
 
 1. **Clone the repository**
+   You can specify a custom folder name if you wish:
+
+   ```bash
+   git clone https://github.com/JocoBorghol/Lianer.git [your-folder-name]
+   ```
+
+2. **Navigate to the directory**
+   ```bash
+   cd [your-folder-name]
+   ```
+
+### Setup Scripts
+
+**Install dependencies**
 
 ```bash
-git clone https://github.com/AlexanderJson/K3---Projekt-i-team.git
-cd K3---Projekt-i-team
+npm install
+```
+
+**Build the project**
+
+```bash
+npm run build
+```
+
+**Serve the production build**
+
+```bash
+npm run serve:dist
 ```
 
 ## Testing, Quality Assurance & Architecture
 
-```
+```bash
+# Run linter
 npx eslint .
+
+# Run unit tests
 npm run test
+
+# Run unit tests with coverage report
 npm run test:coverage
+
+# Run lighthouse performance audit
 npm run lighthouse
-or
-npx lighthouse http://localhost:8080/ --output html --output-path ./lh-report.html
+
+# Alternatively, generate a specific HTML report:
+# npx lighthouse http://localhost:8080/ --output html --output-path ./lh-report.html
 ```
 
 - **Accessibility (WCAG 2.1 Level AA):** The application ensures an inclusive experience with semantic HTML, advanced ARIA (e.g., `aria-live` for dynamic updates), and professional focus management. Zero keyboard traps and full keyboard navigation.
-- **Advanced Architecture:** Built with a strong focus on *Separation of Concerns*. UI logic is broken down into reusable, modular components (e.g., `btn.js`, `ariaAnnouncer.js`) for scalability.
+- **Advanced Architecture:** Built with a strong focus on _Separation of Concerns_. UI logic is broken down into reusable, modular components (e.g., `btn.js`, `ariaAnnouncer.js`) for scalability.
 - **Browsers:** Verified compatibility in Google Chrome, Mozilla Firefox, and Safari.
 - **Responsiveness:** Validated using Chrome DevTools device simulation for mobile, tablet, and desktop.
-- **Code Standards:** 
+- **Code Standards:**
   - **HTML/CSS:** Passed W3C and Jigsaw Validators.
   - **Performance:** Audited via Lighthouse CI with strict targets (>80% in all categories) and 0 critical errors in axe accessibility tests.
 - **Unit tests:** Logic and accessibility tested automatically with Jest and `jest-axe`.
-
-### Running Tests
-
-To verify the project integrity, run the following command:
-
-```bash
-npm test
-```
 
 ### Continuous Integration
 
@@ -169,8 +176,9 @@ We use **GitHub Actions** to automate our testing pipeline. On every `push` and 
 ## Deployment
 
 The project is publicly available and deployed via GitHub Pages.
+
 <p align="center">
-  <a href="https://alexanderjson.github.io/K3---Projekt-i-team/">
+  <a href="https://jocoborghol.github.io/Lianer/">
     Visit Live Application
   </a>
 </p>
@@ -206,9 +214,9 @@ The project was executed using an agile workflow based on the Scrum framework, d
 > In short: same team, multiple hats.
 
 > > **Reflection:**  
-> Working this way gave us a real understanding of how Scrum works in practice, not just in theory.  
-> By rotating roles and staying transparent in our retrospectives, we handled setbacks like illness without losing momentum and kept a steady pace all the way to the finish.  
-> Small team, big responsibility  Team Malmö delivers!
+> > Working this way gave us a real understanding of how Scrum works in practice, not just in theory.  
+> > By rotating roles and staying transparent in our retrospectives, we handled setbacks like illness without losing momentum and kept a steady pace all the way to the finish.  
+> > Small team, big responsibility Team Malmö delivers!
 
 ## Contributors
 

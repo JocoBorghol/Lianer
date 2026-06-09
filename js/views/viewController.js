@@ -1,76 +1,96 @@
-import { renderDashboard } from "./dashboardView.js";
-// calendarView, taskScreen, settingsView are lazy-loaded on demand (see render())
-// contactsView is also lazy-loaded (see contacts block in render())
-import { loadState } from "../storage.js";
+import { renderCalendar } from "./calendarView.js";
+import { taskScreen } from "../taskList/taskScreen.js";
+import { renderSettings } from "./settingsView.js"; 
+import { renderContacts } from "./contactsView.js";
+import { renderDashboard } from "./dashboard/dashboardView.js";
 
-let container = null;
-let activeView = "dashboard";
-let currentRenderId = 0;
+export class ViewController {
+  constructor(target, services = {}) {
+    this.container = target;
+ 
+    this.services = services;
 
-export function initViewController(target) {
-  container = target;
-}
+    /*
+      TODO: still some mixes with old state data that cant just be removed
+    */
+    this.service = services.legacyTaskService ?? services.taskService ?? null;
 
-export async function setView(view, params = null) {
-  activeView = view;
-  if (params) window.viewParams = params;
-  await render();
-}
+    this.activeView = "dashboard";
+    this.params = null;
 
-export async function rerenderActiveView() {
-  await render();
-}
-
-async function render() {
-  if (!container) return;
-
-  const renderId = ++currentRenderId;
-
-  // Rensa containern helt innan ny rendering för att undvika dubbla element
-  container.innerHTML = "";
-
-  // Hämta ALLTID det senaste statet här för att garantera att nya tasks finns med
-  const state = loadState();
-
-  if (activeView === "dashboard") {
-    if (renderId !== currentRenderId) return;
-    // Vi skickar med state även här om dashboardView behöver det
-    renderDashboard(container, state);
-    return;
+    this.currentDate = new Date(); 
   }
 
-  if (activeView === "calendar") {
-    const { renderCalendar } = await import("./calendarView.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = ""; // Extra säkerhet ifall importen dragit ut på tiden
-    renderCalendar(container);
-    return;
+  stepDate(days) {
+    this.currentDate.setDate(this.currentDate.getDate() + days);
+    this.render();
   }
 
-  if (activeView === "tasks") {
-    const { taskScreen } = await import("../taskList/taskScreen.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = "";
-    container.append(taskScreen());
-    return;
+  setView(view, params = null) {
+    this.activeView = view;
+    this.params = params;
+    this.render();
   }
 
-  if (activeView === "settings") {
-    const { renderSettings } = await import("./settingsView.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = "";
-    renderSettings(container, rerenderActiveView);
-    return;
+  navigate(view, params = null) {
+    this.setView(view, params);
   }
 
-  if (activeView === "contacts") {
-    const params = window.viewParams;
-    window.viewParams = null; // Rensa direkt (params redan kopierad)
-    // Lazy-load contactsView to reduce initial JS payload
-    const { renderContacts } = await import("./contactsView.js");
-    if (renderId !== currentRenderId) return;
-    container.innerHTML = "";
-    renderContacts(container, params);
-    return;
+  rerender() {
+    this.render();
+  }
+
+  render() {
+    if (!this.container) return;
+
+    this.container.innerHTML = "";
+
+    if (this.activeView === "dashboard") {
+      renderDashboard(this.container, {
+        dashboardViewModel: this.services.dashboardViewModel
+      });
+      return;
+    }
+
+    if (this.activeView === "calendar") {
+      renderCalendar(this.container, {
+        calendarViewModel: this.services.calendarViewModel
+      });
+      return;
+    }
+
+    if (this.activeView === "tasks") {
+      this.container.append(
+        taskScreen({
+          taskViewModel: this.services.taskScreenViewModel,
+
+          /*
+            Fallback/legacy taskService.
+            Not the main source of truth for the task screen anymore,
+            but useful while old dialogs still exist.
+          */
+          taskService: this.service,
+
+          currentDate: this.currentDate,
+          onNavigateDate: (days) => this.stepDate(days),
+          navigate: (view, params) => this.setView(view, params)
+        })
+      );
+      return;
+    }
+
+    if (this.activeView === "settings") {
+      renderSettings(this.container, () => this.rerender(), this.service);
+      return;
+    }
+
+    if (this.activeView === "contacts") {
+      renderContacts(this.container, this.params, {
+        contactViewModel: this.services.contactViewModel
+      });
+
+      this.params = null;
+      return;
+    }
   }
 }

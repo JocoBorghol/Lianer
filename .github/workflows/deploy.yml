@@ -1,0 +1,54 @@
+name: CI/CD Pipeline - LIANER Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  RESOURCE_GROUP: rg-lianer-prod
+  ACR_NAME: acrlianerprod
+  ACR_SERVER: acrlianerprod.azurecr.io
+  FRONTEND_APP: lianer-frontend
+
+jobs:
+  deploy:
+    name: Build & Deploy to Azure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # STEG 1: Logga in mot Azure
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # STEG 2: Logga in mot ACR
+      - name: Log in to Azure Container Registry
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      # STEG 3: Sätt upp Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # STEG 4: Bygg och pusha Frontend
+      - name: Build and push Frontend
+        run: |
+          docker build \
+            -t ${{ env.ACR_SERVER }}/lianer-frontend:latest \
+            -t ${{ env.ACR_SERVER }}/lianer-frontend:${{ github.sha }} \
+            .
+          docker push ${{ env.ACR_SERVER }}/lianer-frontend:latest
+          docker push ${{ env.ACR_SERVER }}/lianer-frontend:${{ github.sha }}
+
+      # STEG 5: Uppdatera Frontend Container App med ny image
+      - name: Deploy Frontend
+        run: |
+          az containerapp update \
+            --name ${{ env.FRONTEND_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_SERVER }}/lianer-frontend:${{ github.sha }}
+          echo "Frontend uppdaterad -> ${{ github.sha }}"
