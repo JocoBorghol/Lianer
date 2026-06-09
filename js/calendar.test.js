@@ -228,8 +228,7 @@ describe("renderCalendar DOM Component", () => {
     jest.setSystemTime(new Date("2026-02-18T12:00:00Z"));
     jest.clearAllMocks();
 
-    currentCalendarState = structuredClone(defaultCalendarState);
-
+    currentCalendarState = JSON.parse(JSON.stringify(defaultCalendarState));
     mockStorage.loadState.mockReturnValue(currentCalendarState);
 
     taskServiceAdapter = {

@@ -71,17 +71,25 @@ describe("taskScreen component", () => {
     };
 
     mockTaskViewModel = {
-      getTaskServiceAdapter: jest.fn(() => mockTaskService),
+    init: jest.fn().mockResolvedValue(),
 
-      getTasks: jest.fn(() => mockTaskService.getTasks()),
+    getState: jest.fn(() => ({
+        isLoaded: true,
+        isLoading: false,
+        error: null
+    })),
 
-      getPeople: jest.fn(() => currentState.people),
+    getTaskServiceAdapter: jest.fn(() => mockTaskService),
 
-      getViewState: jest.fn(() => ({
+    getTasks: jest.fn(() => mockTaskService.getTasks()),
+
+    getPeople: jest.fn(() => currentState.people),
+
+    getViewState: jest.fn(() => ({
         tasks: mockTaskService.getTasks(),
         people: currentState.people,
         error: null
-      }))
+    }))
     };
 
     const mockTaskList = {
@@ -111,27 +119,37 @@ describe("taskScreen component", () => {
       }
     }));
 
-    const module = await import("./taskList/taskScreen.js");
-    taskScreen = module.taskScreen;
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  function renderTaskScreen(overrides = {}) {
-    return taskScreen({
-      taskViewModel: mockTaskViewModel,
-      taskService: mockTaskService,
-      navigate: jest.fn(),
-      currentDate: new Date(),
-      onNavigateDate: jest.fn(),
-      ...overrides
+        const module = await import("./taskList/taskScreen.js");
+        taskScreen = module.taskScreen;
     });
-  }
 
-  test("Renders Team view default", () => {
-    const screen = renderTaskScreen();
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    const flushAllPromises = async () => {
+    for (let i = 0; i < 10; i++) {
+        await Promise.resolve();
+    }
+    };
+
+    async function renderTaskScreen(overrides = {}) {
+    const screen = taskScreen({
+        taskViewModel: mockTaskViewModel,
+        taskService: mockTaskService,
+        navigate: jest.fn(),
+        currentDate: new Date(),
+        onNavigateDate: jest.fn(),
+        ...overrides
+    });
+
+    await flushAllPromises();
+
+    return screen;
+    }
+
+    test("Renders Team view default", async () => {
+    const screen = await renderTaskScreen();
 
     expect(screen.tagName).toBe("MAIN");
 

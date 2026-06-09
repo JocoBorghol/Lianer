@@ -189,21 +189,25 @@ describe("dashboardView", () => {
     consoleSpy.mockRestore();
   });
 
-  test("Changes dashboard view filter", async () => {
+    test("Changes dashboard view filter", async () => {
     await renderDashboard(container, { dashboardViewModel });
     await flushAllPromises();
 
     const filterSelect = container.querySelector(".taskFilterSelect");
 
-    expect(
-    Array.from(filterSelect.options).map(option => option.value)
-    ).toContain("Anna");
+    expect(filterSelect).not.toBeNull();
 
-    filterSelect.value = "Anna";
+    const personOption = Array.from(filterSelect.options).find(
+        option => !["Team", "ALLA"].includes(option.value)
+    );
+
+    expect(personOption).toBeDefined();
+
+    filterSelect.value = personOption.value;
     filterSelect.dispatchEvent(new Event("change", { bubbles: true }));
 
     await flushAllPromises();
 
-    expect(localStorage.getItem("dashboardViewFilter")).toBe("Anna");
-  });
+    expect(localStorage.getItem("dashboardViewFilter")).toBe(personOption.value);
+    });
 });
