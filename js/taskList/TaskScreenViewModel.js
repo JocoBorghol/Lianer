@@ -411,9 +411,10 @@ export class TaskScreenViewModel {
 }
 
 #toUpdateActivityRequest(updatedTask = {}, existingActivity = {}) {
+    const hasAssignedUserId = Object.prototype.hasOwnProperty.call(updatedTask, "assignedUserId");
     return {
         id: existingActivity.id,
-
+        //TODO: kommer lägga på sen 
         title:
             updatedTask.title
             ?? existingActivity.title
@@ -424,7 +425,9 @@ export class TaskScreenViewModel {
             ?? existingActivity.description
             ?? "Uppdaterad aktivitet",
 
-        assignedTo: this.#getAssignedUserIdFromTask(updatedTask),
+        assignedTo: hasAssignedUserId
+            ? updatedTask.assignedUserId
+            : existingActivity.assignedTo ?? null,
 
         startDate:
             this.#toStartDateTime(updatedTask)
