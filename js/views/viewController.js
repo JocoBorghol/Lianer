@@ -64,7 +64,9 @@ export class ViewController {
     }
 
     if (this.activeView === "calendar") {
-      renderCalendar(this.container);
+      renderCalendar(this.container, {
+        calendarViewModel: this.services.calendarViewModel
+      });
       return;
     }
 

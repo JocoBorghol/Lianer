@@ -16,7 +16,7 @@ import { ActivityService } from "./js/api/dev/Service/activityService.js";
 import { TaskScreenViewModel } from "./js/taskList/TaskScreenViewModel.js";
 import { activityApi } from "./js/api/dev/Endpoints/activityApi.js";
 import { UserService } from "./js/api/dev/Service/UserService.js";
-
+import { CalendarViewModel } from "./js/views/CalendarViewModel.js";
 /**
  * @file app.js
  * @description Huvudentrépunkt för Lianer Project Management App.
@@ -92,11 +92,17 @@ function startApplicationShell() {
     console.warn("UserService could not be created. Task screen will use assigned-user fallbacks.", error);
   }
 
-const taskScreenViewModel = new TaskScreenViewModel({
-  activityService,
-  userService,
-  noteService
-});
+  const taskScreenViewModel = new TaskScreenViewModel({
+    activityService,
+    userService,
+    noteService
+  });
+
+  const calendarViewModel = new CalendarViewModel({
+    taskScreenViewModel
+  });
+
+
   const activityTaskServiceAdapter = taskScreenViewModel.getTaskServiceAdapter();
   const appServices = {
     legacyTaskService,
@@ -104,7 +110,8 @@ const taskScreenViewModel = new TaskScreenViewModel({
     activityService,
     userService,
     taskScreenViewModel,
-    noteService
+    noteService,
+    calendarViewModel
   };
 
   /**
