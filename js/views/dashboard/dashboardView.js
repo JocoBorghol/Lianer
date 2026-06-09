@@ -1,7 +1,6 @@
 import { loadState } from "../../storage.js";
 import { DASHBOARD_FILTER_KEY, FAVORITES_KEY } from "./dashboardConstants.js";
 import {
-  createLoadingCrmBox,
   getDashboardsToShow,
   getPeopleWithoutUnassigned,
   readJsonFromLocalStorage

@@ -4,7 +4,6 @@ import { initTheme } from "./js/theme.js";
 import { openTaskDialog } from "./js/menu/openTaskDialog.js";
 import { maybeShowWelcomeOverlay } from "./js/comps/welcomeOverlay.js";
 import { renderAuthView } from "./js/views/auth/authView.js";
-import { initSeed } from "./js/taskList/seed.js";
 import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
 import { ViewController } from "./js/views/viewController.js";
@@ -41,18 +40,13 @@ window.lianerSmokeTests = Object.freeze({
   smokeTestCreateUser
 });
 
-/*
-  Phase 1:
-  Visa login/register UI först. TODO
  
-*/
 showAuthScreen();
 
 window.addEventListener("authFormSubmitted", (event) => {
   console.log("Auth form submitted:", event.detail);
 
-  // Phase 1: no real API auth yet.
-  // We enter the app when the UI form is submitted.
+ 
   startApplicationShell();
 });
 
@@ -71,17 +65,12 @@ function startApplicationShell() {
   app.classList.add("app");
 
   /*
-    Legacy LocalStorage task flow.
-    Kept for old dialogs, welcome overlay, demo loaders, and anything
-    that still expects the old TaskService API.
+    Legacy - TODO - kommer byta ut detta snart
   */
   const taskRepo = new TaskRepo();
   const legacyTaskService = new TaskService(taskRepo);
   legacyTaskService.init();
-
-  /*
-    New API-backed Activity flow.
-  */
+ 
   const activityStore = new ActivityStore();
 
   const activityService = new ActivityService({
@@ -95,7 +84,7 @@ function startApplicationShell() {
   try {
     userService = new UserService();
   } catch (error) {
-    console.warn("UserService could not be created. Task screen will use assigned-user fallbacks.", error);
+    console.warn("UserService could not be created Error:", error);
   }
   const contactStore = new ContactStore();
 

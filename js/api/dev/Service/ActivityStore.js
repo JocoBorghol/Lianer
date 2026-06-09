@@ -1,4 +1,3 @@
-import { activityApi } from "../Endpoints/activityApi.js";
 
 
 /**
@@ -133,8 +132,8 @@ eller
 
 i 1: 
 Store håller data, Service uppdaterar store.
-Store har även funktionalitet för att notifiera
-sina "barn" om sin egna data uppdateras
+Store har även funktionalitet för att notifiera alla
+ om sin egna data uppdateras
 
 fråga: 
 UI ska subscribe på ViewModel. 

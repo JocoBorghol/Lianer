@@ -3,20 +3,7 @@ const CONTACT_STATUS_TO_UI = Object.freeze({
   1: "Pågående",
   2: "Klar",
   3: "Förlorad",
-  4: "Återkom",
-
-  "0": "Ej kontaktad",
-  "1": "Pågående",
-  "2": "Klar",
-  "3": "Förlorad",
-  "4": "Återkom",
-
-  EjKontaktad: "Ej kontaktad",
-  "Ej kontaktad": "Ej kontaktad",
-  Pågående: "Pågående",
-  Klar: "Klar",
-  Förlorad: "Förlorad",
-  Återkom: "Återkom"
+  4: "Återkom"
 });
 
 const UI_TO_CONTACT_STATUS = Object.freeze({

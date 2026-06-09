@@ -1,5 +1,5 @@
 /**
- * @file runtime-config.js
+ * @file config.js
  * @description
  * Runtime configuration for connection to backend api. 
  * This file is loaded before the main application code is.

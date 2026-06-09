@@ -7,24 +7,11 @@ import { renderDashboard } from "./dashboard/dashboardView.js";
 export class ViewController {
   constructor(target, services = {}) {
     this.container = target;
-
-    /*
-      services is now our small composition object.
-
-      legacyTaskService:
-        old LocalStorage/demo task service.
-        Kept alive for old dialogs, welcome overlay, settings, etc.
-
-      taskScreenViewModel:
-        new API-backed ViewModel for taskScreen.
-    */
+ 
     this.services = services;
 
     /*
-      Compatibility alias.
-
-      Some old views still expect "this.service" to be the old task service.
-      So we keep this.service pointing to the legacy task service.
+      TODO: still some mixes with old state data that cant just be removed
     */
     this.service = services.legacyTaskService ?? services.taskService ?? null;
 

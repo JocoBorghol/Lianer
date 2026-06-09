@@ -1,8 +1,9 @@
 import { AppConfig } from "../../../config/appConfig.js";
 
 /*
-    DEV ONLY token store. All logic to save and use
-    JWT-tokens
+    All logic to save and use JWT-tokens
+    (Temp solution - will be replaced with safer storing
+    in next version. ) 
 */
 
 

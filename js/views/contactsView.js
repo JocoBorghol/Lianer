@@ -1474,9 +1474,9 @@ function openCsvImportModal(csvText, container, shell, master) {
 
     if (contacts.length === 0) { alert("Inga giltiga kontakter att importera."); return; }
 
-    const createdContacts = await importContacts(parsed);
+    const createdContacts = await importContacts(contacts);
     allContacts = await getAllContacts();
-    selectedContactId = createdContacts?.[0]?.id ?? parsed[0].id;
+    selectedContactId = createdContacts?.[0]?.id ?? contacts[0].id;
     refreshList(master, container, shell);
     overlay.remove();
     alert(`Importerade ${contacts.length} kontakter!`);

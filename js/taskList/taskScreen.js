@@ -9,7 +9,6 @@ import { renderTaskBoard } from "./taskBoard.js";
 
 export const taskScreen = ({
     taskViewModel,
-    taskService,
     navigate,
     currentDate,
     onNavigateDate
