@@ -96,7 +96,10 @@ export class ViewController {
     }
 
     if (this.activeView === "contacts") {
-      renderContacts(this.container, this.params);
+      renderContacts(this.container, this.params, {
+        contactViewModel: this.services.contactViewModel
+      });
+
       this.params = null;
       return;
     }
