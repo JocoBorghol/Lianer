@@ -10,7 +10,83 @@ import { renderDashboardControls } from "./dashboardControls.js";
 import { createTaskBox } from "./dashboardTaskBox.js";
 import { createCRMBox } from "./dashboardCrmBox.js";
 
-export async function renderDashboard(container) {
+let activeDashboardViewModel = null;
+
+function renderDashboardError(container, error) {
+  container.innerHTML = "";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "dashboard";
+
+  wrapper.innerHTML = `
+    <h2>Dashboard</h2>
+    <div class="dashboard-box" role="alert" style="padding:20px;">
+      <strong>Kunde inte ladda dashboard-data.</strong>
+      <p style="color:var(--text-dim); margin-top:8px;">
+        ${error?.message ?? "Okänt fel."}
+      </p>
+    </div>
+  `;
+
+  container.append(wrapper);
+}
+
+function renderDashboardLoading(container) {
+  container.innerHTML = "";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "dashboard";
+
+  wrapper.innerHTML = `
+    <h2>Dashboard</h2>
+    <div class="dashboard-box placeholder" style="padding:20px; text-align:center; color:var(--text-dim);">
+      Laddar dashboard-data från API...
+    </div>
+  `;
+
+  container.append(wrapper);
+}
+
+function getDashboardData() {
+  if (!activeDashboardViewModel) {
+    return {
+      state: loadState(),
+      allContacts: []
+    };
+  }
+
+  return {
+    state: activeDashboardViewModel.getDashboardState(),
+    allContacts: activeDashboardViewModel.getContacts()
+  };
+}
+
+export async function renderDashboard(container, options = {}) {
+  activeDashboardViewModel =
+    options.dashboardViewModel
+    ?? activeDashboardViewModel;
+
+  container.innerHTML = "";
+
+  if (activeDashboardViewModel) {
+    renderDashboardLoading(container);
+
+    try {
+      await activeDashboardViewModel.init();
+
+      const vmState = activeDashboardViewModel.getViewState();
+
+      if (vmState.error) {
+        renderDashboardError(container, vmState.error);
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to initialize dashboard view model:", error);
+      renderDashboardError(container, error);
+      return;
+    }
+  }
+
   container.innerHTML = "";
 
   const wrapper = document.createElement("div");
@@ -22,17 +98,30 @@ export async function renderDashboard(container) {
 
   renderDashboardControls({
     wrapper,
-    onRefresh: () => renderDashboard(container)
+    onRefresh: async () => {
+      if (activeDashboardViewModel?.refresh) {
+        await activeDashboardViewModel.refresh();
+      }
+
+      renderDashboard(container, {
+        dashboardViewModel: activeDashboardViewModel
+      });
+    }
   });
 
   container.append(wrapper);
 
-  const state = loadState();
+  const { state, allContacts } = getDashboardData();
+
   const people = getPeopleWithoutUnassigned(state);
   const favorites = readJsonFromLocalStorage(FAVORITES_KEY, []);
   const activeFilter = localStorage.getItem(DASHBOARD_FILTER_KEY) || "Team";
-  const dashboardsToShow = getDashboardsToShow({ activeFilter, people, favorites });
-  const crmBoxContainers = [];
+
+  const dashboardsToShow = getDashboardsToShow({
+    activeFilter,
+    people,
+    favorites
+  });
 
   dashboardsToShow.forEach(name => {
     const row = document.createElement("div");
@@ -42,33 +131,18 @@ export async function renderDashboard(container) {
       name,
       state,
       favorites,
-      onRefresh: () => renderDashboard(container)
+      onRefresh: () => renderDashboard(container, {
+        dashboardViewModel: activeDashboardViewModel
+      })
     });
 
-    const crmBoxContainer = createLoadingCrmBox({ name, state });
+    const crmBox = createCRMBox({
+      name,
+      allContacts,
+      state
+    });
 
-    row.append(taskBox, crmBoxContainer);
+    row.append(taskBox, crmBox);
     wrapper.append(row);
-
-    crmBoxContainers.push({ name, container: crmBoxContainer });
-  });
-
-  import("../../utils/contactsDb.js").then(async ({ getAllContacts, initContactsDB }) => {
-    try {
-      await initContactsDB();
-      const allContacts = await getAllContacts();
-
-      crmBoxContainers.forEach(({ name, container }) => {
-        const crmBox = createCRMBox({ name, allContacts, state });
-        container.replaceWith(crmBox);
-      });
-    } catch (error) {
-      console.error("Failed to load contacts for dashboard", error);
-      crmBoxContainers.forEach(({ container }) => {
-        container.innerHTML = `<div style="padding:20px; text-align:center; color:red">Kunde inte ladda CRM-data.</div>`;
-      });
-    }
-  }).catch(error => {
-    console.error("Failed to import contactsDb.js for dashboard", error);
   });
 }

@@ -1,4 +1,4 @@
-import { loadState } from "../../storage";
+import { loadState } from "../../storage.js";
 export class DashboardViewModel {
   #taskScreenViewModel;
   #contactViewModel;

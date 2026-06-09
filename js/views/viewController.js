@@ -59,7 +59,9 @@ export class ViewController {
     this.container.innerHTML = "";
 
     if (this.activeView === "dashboard") {
-      renderDashboard(this.container);
+      renderDashboard(this.container, {
+        dashboardViewModel: this.services.dashboardViewModel
+      });
       return;
     }
 

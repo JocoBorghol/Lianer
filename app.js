@@ -21,7 +21,7 @@ import { ContactStore } from "./js/views/ContactStore.js";
 import { ContactService } from "./js/views/ContactService.js";
 import { ContactViewModel } from "./js/views/ContactsViewModel.js";
 import { contactApi } from "./js/api/dev/Endpoints/contactApi.js";
-
+import { DashboardViewModel } from "./js/views/dashboard/DashboardViewModel.js";
 
 /**
  * @file app.js
@@ -113,7 +113,10 @@ function startApplicationShell() {
     userService,
     noteService
   });
-
+  const dashboardViewModel = new DashboardViewModel({
+    taskScreenViewModel,
+    contactViewModel
+  });
   const calendarViewModel = new CalendarViewModel({
     taskScreenViewModel
   });
@@ -131,7 +134,8 @@ function startApplicationShell() {
     userService,
     taskScreenViewModel,
     calendarViewModel,
-    contactViewModel
+    contactViewModel,
+    dashboardViewModel
   };
 
   /**
@@ -161,12 +165,7 @@ function startApplicationShell() {
 
   sideMenuDiv.append(sideMenu);
 
-  /*
-    Keep old seed for now because dashboard/welcome/demo flows may still depend
-    on old local task state. The new task screen will use API activities instead.
-  */
-  initSeed();
-
+ 
   app.replaceChildren(sideMenuDiv, mainContent);
 
   viewController.setView("dashboard");
