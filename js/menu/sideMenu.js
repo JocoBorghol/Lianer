@@ -101,6 +101,7 @@ export const menu = ({navigate, onAddTask}) => {
     { text: "Dashboard",    icon: "dashboard",      view: "dashboard" },
     { text: "Uppgifter",    icon: "assignment",     view: "tasks" },
     { text: "Kontakter",    icon: "group",          view: "contacts" },
+    { text: "AI-assistent", icon: "smart_toy",      view: "agent" },
     { text: "Inställningar", icon: "settings",       view: "settings" },
     { text: "Tema",         icon: "contrast",       view: "theme" } 
   ];
