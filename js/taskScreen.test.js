@@ -5,6 +5,12 @@ let mockTaskService;
 let mockTaskViewModel;
 let currentState;
 
+const flushAllPromises = async () => {
+  for (let i = 0; i < 10; i++) {
+    await Promise.resolve();
+  }
+};
+
 describe("taskScreen component", () => {
   beforeEach(async () => {
     jest.resetModules();
@@ -71,25 +77,25 @@ describe("taskScreen component", () => {
     };
 
     mockTaskViewModel = {
-    init: jest.fn().mockResolvedValue(),
+      init: jest.fn().mockResolvedValue(),
 
-    getState: jest.fn(() => ({
+      getState: jest.fn(() => ({
         isLoaded: true,
         isLoading: false,
         error: null
-    })),
+      })),
 
-    getTaskServiceAdapter: jest.fn(() => mockTaskService),
+      getTaskServiceAdapter: jest.fn(() => mockTaskService),
 
-    getTasks: jest.fn(() => mockTaskService.getTasks()),
+      getTasks: jest.fn(() => mockTaskService.getTasks()),
 
-    getPeople: jest.fn(() => currentState.people),
+      getPeople: jest.fn(() => currentState.people),
 
-    getViewState: jest.fn(() => ({
+      getViewState: jest.fn(() => ({
         tasks: mockTaskService.getTasks(),
         people: currentState.people,
         error: null
-    }))
+      }))
     };
 
     const mockTaskList = {
@@ -119,41 +125,36 @@ describe("taskScreen component", () => {
       }
     }));
 
-        const module = await import("./taskList/taskScreen.js");
-        taskScreen = module.taskScreen;
-    });
+    const module = await import("./taskList/taskScreen.js");
+    taskScreen = module.taskScreen;
+  });
 
-    afterEach(() => {
-        jest.useRealTimers();
-    });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
-    const flushAllPromises = async () => {
-    for (let i = 0; i < 10; i++) {
-        await Promise.resolve();
-    }
-    };
-
-    async function renderTaskScreen(overrides = {}) {
-    const screen = taskScreen({
-        taskViewModel: mockTaskViewModel,
-        taskService: mockTaskService,
-        navigate: jest.fn(),
-        currentDate: new Date(),
-        onNavigateDate: jest.fn(),
-        ...overrides
+  async function renderTaskScreen(overrides = {}) {
+    const element = taskScreen({
+      taskViewModel: mockTaskViewModel,
+      taskService: mockTaskService,
+      navigate: jest.fn(),
+      currentDate: new Date(),
+      onNavigateDate: jest.fn(),
+      ...overrides
     });
 
     await flushAllPromises();
 
-    return screen;
-    }
+    return element;
+  }
 
-    test("Renders Team view default", async () => {
+  test("Renders Team view default", async () => {
     const screen = await renderTaskScreen();
 
     expect(screen.tagName).toBe("MAIN");
 
     const filterSelect = screen.querySelector(".taskFilterSelect");
+    expect(filterSelect).not.toBeNull();
     expect(filterSelect.value).toBe("Team");
 
     const lists = screen.querySelectorAll(".mock-task-list");
@@ -164,12 +165,13 @@ describe("taskScreen component", () => {
     expect(lists[2].textContent).toContain("Klar - 1 tasks");
   });
 
-  test("Filters by specific person", () => {
+  test("Filters by specific person", async () => {
     localStorage.setItem("taskViewFilter", "Anna");
 
-    const screen = renderTaskScreen();
+    const screen = await renderTaskScreen();
 
     const filterSelect = screen.querySelector(".taskFilterSelect");
+    expect(filterSelect).not.toBeNull();
     expect(filterSelect.value).toBe("Anna");
 
     const lists = screen.querySelectorAll(".mock-task-list");
@@ -179,10 +181,10 @@ describe("taskScreen component", () => {
     expect(lists[2].textContent).toContain("Klar - 0 tasks");
   });
 
-  test("Filters by old format person", () => {
+  test("Filters by old format person", async () => {
     localStorage.setItem("taskViewFilter", "Björn");
 
-    const screen = renderTaskScreen();
+    const screen = await renderTaskScreen();
 
     const lists = screen.querySelectorAll(".mock-task-list");
 
@@ -190,20 +192,20 @@ describe("taskScreen component", () => {
     expect(lists[1].textContent).toContain("Pågår - 1 tasks");
   });
 
-  test("Filters by Ingen (Unassigned)", () => {
+  test("Filters by Ingen (Unassigned)", async () => {
     localStorage.setItem("taskViewFilter", "Ingen");
 
-    const screen = renderTaskScreen();
+    const screen = await renderTaskScreen();
 
     const lists = screen.querySelectorAll(".mock-task-list");
 
     expect(lists[2].textContent).toContain("Klar - 1 tasks");
   });
 
-  test("Renders Archive view", () => {
+  test("Renders Archive view", async () => {
     localStorage.setItem("taskViewFilter", "Arkiv");
 
-    const screen = renderTaskScreen();
+    const screen = await renderTaskScreen();
 
     const lists = screen.querySelectorAll(".mock-task-list");
 
@@ -211,13 +213,16 @@ describe("taskScreen component", () => {
     expect(lists[0].textContent).toContain("Stängd - 1 tasks");
   });
 
-  test("Updates view when filter changes", () => {
-    const screen = renderTaskScreen();
+  test("Updates view when filter changes", async () => {
+    const screen = await renderTaskScreen();
 
     const filterSelect = screen.querySelector(".taskFilterSelect");
+    expect(filterSelect).not.toBeNull();
 
     filterSelect.value = "Anna";
     filterSelect.dispatchEvent(new Event("change", { bubbles: true }));
+
+    await flushAllPromises();
 
     expect(localStorage.getItem("taskViewFilter")).toBe("Anna");
 
@@ -225,8 +230,8 @@ describe("taskScreen component", () => {
     expect(lists[0].textContent).toContain("Att göra - 1 tasks");
   });
 
-  test("Multi-View buttons change the view mode", () => {
-    const screen = renderTaskScreen();
+  test("Multi-View buttons change the view mode", async () => {
+    const screen = await renderTaskScreen();
 
     expect(screen.querySelector(".taskBoard")).not.toBeNull();
 
@@ -237,7 +242,11 @@ describe("taskScreen component", () => {
       btn.textContent.includes("Vecka")
     );
 
+    expect(weekBtn).toBeDefined();
+
     weekBtn.click();
+
+    await flushAllPromises();
 
     expect(localStorage.getItem("taskViewMode")).toBe("week");
     expect(screen.querySelector(".week-view-grid")).not.toBeNull();
@@ -246,7 +255,11 @@ describe("taskScreen component", () => {
       btn.textContent.includes("Dag")
     );
 
+    expect(dayBtn).toBeDefined();
+
     dayBtn.click();
+
+    await flushAllPromises();
 
     expect(localStorage.getItem("taskViewMode")).toBe("day");
     expect(screen.querySelector(".day-view-wrapper")).not.toBeNull();
@@ -255,13 +268,17 @@ describe("taskScreen component", () => {
       btn.textContent.includes("Board")
     );
 
+    expect(boardBtn).toBeDefined();
+
     boardBtn.click();
+
+    await flushAllPromises();
 
     expect(localStorage.getItem("taskViewMode")).toBe("board");
     expect(screen.querySelector(".taskBoard")).not.toBeNull();
   });
 
-  test("Shows Welcome Overlay with Slide11.jpg when no tasks exist", () => {
+  test("Shows Welcome Overlay with Slide11.jpg when no tasks exist", async () => {
     currentState.tasks = [];
 
     mockTaskService.getTasks.mockReturnValue([]);
@@ -272,7 +289,7 @@ describe("taskScreen component", () => {
       error: null
     });
 
-    const screen = renderTaskScreen();
+    const screen = await renderTaskScreen();
 
     const emptyState = screen.querySelector(".empty-state-container");
 
