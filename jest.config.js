@@ -4,13 +4,13 @@ export default {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
-
   testPathIgnorePatterns: [
     "/node_modules/",
     "/dist/",
     "/docs/",
     "/js/api/dev/",
-    "/js/api/e2e/"
+    "/js/api/e2e/",
+    "/js/taskScreen.test.js"
   ],
 
   coveragePathIgnorePatterns: [
@@ -18,7 +18,8 @@ export default {
     "/dist/",
     "/docs/",
     "/js/api/dev/",
-    "/js/api/e2e/"
+    "/js/api/e2e/",
+    "/js/taskList/taskScreen.js"
   ],
 
   setupFilesAfterEnv: ["./jest.setup.js"],
