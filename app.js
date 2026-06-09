@@ -9,7 +9,8 @@ import { TaskRepo } from "./js/repo/TaskRepo.js";
 import { TaskService } from "./js/service/taskService.js";
 import { ViewController } from "./js/views/viewController.js";
 import { smokeTestCreateUser } from "./js/api/dev/userSmokeTest.js";
-
+import { noteApi } from "./js/api/dev/Endpoints/noteApi.js";
+import { NoteService } from "./js/api/dev/Service/NoteService.js";
 import { ActivityStore } from "./js/api/dev/Service/ActivityStore.js";
 import { ActivityService } from "./js/api/dev/Service/activityService.js";
 import { TaskScreenViewModel } from "./js/taskList/TaskScreenViewModel.js";
@@ -81,6 +82,7 @@ function startApplicationShell() {
     activityApi,
     activityStore
   });
+  const noteService = new NoteService(noteApi);
 
   let userService = null;
 
@@ -90,17 +92,19 @@ function startApplicationShell() {
     console.warn("UserService could not be created. Task screen will use assigned-user fallbacks.", error);
   }
 
-  const taskScreenViewModel = new TaskScreenViewModel({
-    activityService,
-    userService
-  });
+const taskScreenViewModel = new TaskScreenViewModel({
+  activityService,
+  userService,
+  noteService
+});
   const activityTaskServiceAdapter = taskScreenViewModel.getTaskServiceAdapter();
   const appServices = {
     legacyTaskService,
     activityStore,
     activityService,
     userService,
-    taskScreenViewModel
+    taskScreenViewModel,
+    noteService
   };
 
   /**

@@ -18,15 +18,17 @@ const UI_STATUS_TO_API_STATUS = Object.freeze({
 export class TaskScreenViewModel {
     #activityService;
     #userService;
-
+    #noteService;
+    #notesByActivityId = new Map();
     #users = [];
     #isLoaded = false;
     #isLoading = false;
     #error = null;
-
-    constructor({ activityService, userService = null }) {
+    
+    constructor({ activityService, userService = null, noteService = null }) {
         this.#activityService = activityService;
         this.#userService = userService;
+        this.#noteService = noteService;
     }
 
     async init() {
@@ -36,14 +38,15 @@ export class TaskScreenViewModel {
         this.#error = null;
 
         try {
-            await this.#activityService.loadActivities({
-                currentPage: 1,
-                pageSize: 100
-            });
+        await this.#activityService.loadActivities({
+            currentPage: 1,
+            pageSize: 100
+        });
+        if (this.#userService?.loadUsers) {
+            this.#users = await this.#userService.loadUsers();
+        }
+        await this.#loadNotesForActivities();
 
-            if (this.#userService?.loadUsers) {
-                this.#users = await this.#userService.loadUsers();
-            }
 
             this.#isLoaded = true;
         } catch (error) {
@@ -119,124 +122,145 @@ export class TaskScreenViewModel {
         );
     }
 
-getTaskServiceAdapter() {
-    return {
-        getTasks: () => this.getTasks(),
+    getTaskServiceAdapter() {
+        return {
+            getTasks: () => this.getTasks(),
 
-        getPeople: () => this.getPeople(),
+            getPeople: () => this.getPeople(),
 
-        getAssignableUsers: () => this.getAssignableUsers(),
+            getAssignableUsers: () => this.getAssignableUsers(),
 
-        getTaskById: (id) => {
-            return this.getTasks().find(task => task.id === id) ?? null;
-        }, 
+            getTaskById: (id) => {
+                return this.getTasks().find(task => task.id === id) ?? null;
+            }, 
 
-        _compareRank: (a = "", b = "") => {
-            return String(a).localeCompare(String(b), "sv-SE", {
-                numeric: true,
-                sensitivity: "base"
-            });
-        },
+            _compareRank: (a = "", b = "") => {
+                return String(a).localeCompare(String(b), "sv-SE", {
+                    numeric: true,
+                    sensitivity: "base"
+                });
+            },
 
-        addTask: async (taskDraft) => {
-            const created = await this.#activityService.createActivity(
-                this.#toCreateActivityRequest(taskDraft)
-            );
+            addTask: async (taskDraft) => {
+                const created = await this.#activityService.createActivity(
+                    this.#toCreateActivityRequest(taskDraft)
+                );
 
-            notify();
+                notify();
 
-            return created?.id
-                ? this.#toTaskCardShape(created, this.getTasks().length)
-                : created;
-        },
+                return created?.id
+                    ? this.#toTaskCardShape(created, this.getTasks().length)
+                    : created;
+            },
+            addNote: async (taskId, noteText) => {
+                if (!this.#noteService) return null;
 
-        updateTask: async (updatedTask) => {
-            const activity = this.#activityService.getActivityById(updatedTask.id);
-            if (!activity) return null;
+                const content = String(noteText ?? "").trim();
+                if (!content) return null;
 
-            const updated = await this.#activityService.updateActivity(
-                this.#toUpdateActivityRequest(updatedTask, activity)
-            );
+                const created = await this.#noteService.createNote(taskId, {
+                    title: "Notis",
+                    content
+                });
 
-            notify();
+                if (created?.id) {
+                    const existing = this.#notesByActivityId.get(taskId) ?? [];
+                    this.#notesByActivityId.set(taskId, [...existing, created]);
+                }
 
-            return updated?.id
-                ? this.#toTaskCardShape(updated, 0)
-                : updated;
-        },
+                notify();
 
-        changeStatus: async (id, newStatus) => {
-            const activity = this.#activityService.getActivityById(id);
-            if (!activity) return null;
+                return created;
+            },
 
-            const updated = await this.#activityService.updateActivity({
-                id: activity.id,
-                description: activity.description ?? null,
-                assignedTo: activity.assignedTo ?? null,
-                startDate: activity.startDate ?? null,
-                endDate: activity.endDate ?? null,
-                status: UI_STATUS_TO_API_STATUS[newStatus] ?? activity.status
-            });
+            updateTask: async (updatedTask) => {
+                const activity = this.#activityService.getActivityById(updatedTask.id);
+                if (!activity) return null;
 
-            notify();
+                const updated = await this.#activityService.updateActivity(
+                    this.#toUpdateActivityRequest(updatedTask, activity)
+                );
 
-            return updated;
-        },
+                await this.#createUnsavedNotesForTask(updatedTask);
 
-        updateTaskOrder: async (id, newStatus) => {
-            const activity = this.#activityService.getActivityById(id);
-            if (!activity) return null;
+                notify();
 
-            const updated = await this.#activityService.updateActivity({
-                id: activity.id,
-                description: activity.description ?? null,
-                assignedTo: activity.assignedTo ?? null,
-                startDate: activity.startDate ?? null,
-                endDate: activity.endDate ?? null,
-                status: UI_STATUS_TO_API_STATUS[newStatus] ?? activity.status
-            });
+                return updated?.id
+                    ? this.#toTaskCardShape(updated, 0)
+                    : updated;
+            },
+            changeStatus: async (id, newStatus) => {
+                const activity = this.#activityService.getActivityById(id);
+                if (!activity) return null;
 
-            notify();
+                const updated = await this.#activityService.updateActivity({
+                    id: activity.id,
+                    description: activity.description ?? null,
+                    assignedTo: activity.assignedTo ?? null,
+                    startDate: activity.startDate ?? null,
+                    endDate: activity.endDate ?? null,
+                    status: UI_STATUS_TO_API_STATUS[newStatus] ?? activity.status
+                });
 
-            return updated;
-        },
+                notify();
 
-        moveTask: () => {
-            // LTODO
-            return null;
-        },
+                return updated;
+            },
 
-        closeTaskWithReason: async (id) => {
-            const activity = this.#activityService.getActivityById(id);
-            if (!activity) return null;
+            updateTaskOrder: async (id, newStatus) => {
+                const activity = this.#activityService.getActivityById(id);
+                if (!activity) return null;
 
-            const updated = await this.#activityService.updateActivity({
-                id: activity.id,
-                description: activity.description ?? null,
-                assignedTo: activity.assignedTo ?? null,
-                startDate: activity.startDate ?? null,
-                endDate: activity.endDate ?? null,
-                status: UI_STATUS_TO_API_STATUS[TASK_STATUSES.CLOSED]
-            });
+                const updated = await this.#activityService.updateActivity({
+                    id: activity.id,
+                    description: activity.description ?? null,
+                    assignedTo: activity.assignedTo ?? null,
+                    startDate: activity.startDate ?? null,
+                    endDate: activity.endDate ?? null,
+                    status: UI_STATUS_TO_API_STATUS[newStatus] ?? activity.status
+                });
 
-            notify();
+                notify();
 
-            return updated;
-        },
+                return updated;
+            },
 
-        deleteTask: async (idOrTask) => {
-            const id = typeof idOrTask === "object"
-                ? idOrTask.id
-                : idOrTask;
+            moveTask: () => {
+                // LTODO
+                return null;
+            },
 
-            const deleted = await this.#activityService.deleteActivity(id);
+            closeTaskWithReason: async (id) => {
+                const activity = this.#activityService.getActivityById(id);
+                if (!activity) return null;
 
-            notify();
+                const updated = await this.#activityService.updateActivity({
+                    id: activity.id,
+                    description: activity.description ?? null,
+                    assignedTo: activity.assignedTo ?? null,
+                    startDate: activity.startDate ?? null,
+                    endDate: activity.endDate ?? null,
+                    status: UI_STATUS_TO_API_STATUS[TASK_STATUSES.CLOSED]
+                });
 
-            return deleted;
-        }
-    };
-}
+                notify();
+
+                return updated;
+            },
+
+            deleteTask: async (idOrTask) => {
+                const id = typeof idOrTask === "object"
+                    ? idOrTask.id
+                    : idOrTask;
+
+                const deleted = await this.#activityService.deleteActivity(id);
+
+                notify();
+
+                return deleted;
+            }
+        };
+    }
 
     #toTaskCardShape(activity, index) {
         const status = API_STATUS_TO_UI_STATUS[activity.status] ?? TASK_STATUSES.TODO;
@@ -259,12 +283,11 @@ getTaskServiceAdapter() {
             assigned: assignedName,
             assignedTo: assignedName === "Ingen" ? [] : [assignedName],
 
-            // Important: this is the real backend value.
             assignedUserId: activity.assignedTo ?? null,
 
             completed: status === TASK_STATUSES.DONE || status === TASK_STATUSES.CLOSED,
 
-            notes: [],
+            notes: this.#toTaskNotes(activity.id),
             contactId: activity.contactId ?? null,
             contactName: activity.contactName ?? null,
 
@@ -279,6 +302,24 @@ getTaskServiceAdapter() {
 
             rawActivity: activity
         };
+    }
+
+
+    #toTaskNotes(activityId) {
+        const notes = this.#notesByActivityId.get(activityId) ?? [];
+
+        return notes
+            .map(note => ({
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                text: note.content,
+                createdAt: note.createdAt,
+                date: note.createdAt,
+                createdBy: note.createdBy,
+                type: "note"
+            }))
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     }
 
     #getAssignedName(userId) {
@@ -402,6 +443,32 @@ getTaskServiceAdapter() {
     };
 }
 
+
+    async #loadNotesForActivities() {
+        if (!this.#noteService) return;
+
+        const activities = this.#activityService.getActivities();
+
+        await Promise.all(
+            activities.map(async (activity) => {
+                try {
+                    const notes = await this.#noteService.loadNotesForActivity(activity.id, {
+                        currentPage: 1,
+                        pageSize: 50
+                    });
+
+                    this.#notesByActivityId.set(
+                        activity.id,
+                        Array.isArray(notes) ? notes : []
+                    );
+                } catch (error) {
+                    console.warn(`Could not load notes for activity ${activity.id}`, error);
+                    this.#notesByActivityId.set(activity.id, []);
+                }
+            })
+        );
+    }
+
     #getAssignedUserIdFromTask(task = {}) {
         if (task.assignedUserId !== undefined) {
             return task.assignedUserId || null;
@@ -446,7 +513,49 @@ getTaskServiceAdapter() {
 
         return this.#toIsoDateTime(task.deadline, startTime);
     }
+    async #createUnsavedNotesForTask(task = {}) {
+        if (!this.#noteService || !task.id) return [];
 
+        const notes = Array.isArray(task.notes)
+            ? task.notes
+            : [];
+
+ 
+        const unsavedNotes = notes.filter(note =>
+            note &&
+            !note.id &&
+            (note.text || note.content)
+        );
+
+        if (unsavedNotes.length === 0) {
+            return [];
+        }
+
+        const createdNotes = [];
+
+        for (const note of unsavedNotes) {
+            const content = String(note.text ?? note.content ?? "").trim();
+            if (!content) continue;
+
+            const created = await this.#noteService.createNote(task.id, {
+                title: note.title ?? "Notis",
+                content
+            });
+
+            if (created?.id) {
+                createdNotes.push(created);
+            }
+        }
+
+        const existing = this.#notesByActivityId.get(task.id) ?? [];
+
+        this.#notesByActivityId.set(task.id, [
+            ...existing,
+            ...createdNotes
+        ]);
+
+        return createdNotes;
+    }
     #toEndDateTime(task = {}) {
         if (!task.deadline || task.deadline === 0) {
             return null;
