@@ -19,6 +19,7 @@ describe("viewController", () => {
 
     services = {
       taskService,
+      contactService: { fake: "contactService" },
       dashboardViewModel: { fake: "dashboardViewModel" },
       calendarViewModel: { fake: "calendarViewModel" },
       taskScreenViewModel: { fake: "taskScreenViewModel" },
@@ -115,7 +116,8 @@ describe("viewController", () => {
     expect(renderSettings).toHaveBeenCalledWith(
       container,
       expect.any(Function),
-      taskService
+      taskService,
+      services.contactService
     );
   });
 

@@ -18,7 +18,7 @@ import { showToast } from "../utils/toast.js";
  * @param {Function} rerenderCallback - Callback för att synka om hela appen.
  * @returns {void}
  */
-export function renderSettings(container, rerenderCallback, taskService) {
+export function renderSettings(container, rerenderCallback, taskService, contactService) {
   container.innerHTML = "";
   const state = loadState();
   const people = state.people || [];
@@ -177,7 +177,7 @@ export function renderSettings(container, rerenderCallback, taskService) {
     const key = demoSelect.value;
     const label = demoOptions.find(o => o.value === key)?.label || key;
     if (!confirm(`Varning: Detta ersätter all nuvarande data med valt demoläge (${label}). Fortsätt?`)) return;
-    await loadDemoByKey(key, taskService);
+    await loadDemoByKey(key, taskService, contactService);
     if (rerenderCallback) rerenderCallback();
   };
 
@@ -386,6 +386,26 @@ export function renderSettings(container, rerenderCallback, taskService) {
   clearBtn.setAttribute("aria-label", "Radera all sparad data permanent");
   clearBtn.onclick = async () => {
     if (!confirm("Varning: Detta raderar ALLA uppgifter, teammedlemmar och kontakter permanent. Vill du fortsätta?")) return;
+
+    if (taskService && taskService.clearTasks) {
+      await taskService.clearTasks();
+    }
+
+    if (contactService) {
+      try {
+        const current = await contactService.loadContacts({ currentPage: 1, pageSize: 200 });
+        for (const contact of current) {
+          try {
+            await contactService.deleteContact(contact.id);
+          } catch (e) {
+            console.warn(`Could not delete contact ${contact.id} from backend:`, e);
+          }
+        }
+        contactService.clearCache();
+      } catch (e) {
+        console.warn("Could not clear backend contacts:", e);
+      }
+    }
 
     localStorage.removeItem("state");
     const keysToRemove = [];

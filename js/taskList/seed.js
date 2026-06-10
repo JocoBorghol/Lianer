@@ -191,11 +191,62 @@ async function seedContacts(contacts) {
  * Ersätter kontakter helt (clearAll + import) vid demoladdning.
  * @param {Array<Object>} contacts
  */
-async function replaceContacts(contacts) {
+async function replaceContacts(contacts, contactService) {
   try {
     await initContactsDB();
     await clearAllContacts();
     await importContacts(contacts);
+
+    if (contactService) {
+      // 1. Clear backend database contacts
+      const current = await contactService.loadContacts({ currentPage: 1, pageSize: 200 });
+      for (const contact of current) {
+        try {
+          await contactService.deleteContact(contact.id);
+        } catch (e) {
+          console.warn(`Could not delete contact ${contact.id} from backend:`, e);
+        }
+      }
+
+      // 2. Import the new ones to backend
+      for (const c of contacts) {
+        try {
+          const name = c.name ?? "";
+          const parts = name.trim().split(/\s+/);
+          const firstName = parts.shift() ?? "";
+          const lastName = parts.join(" ") || "-";
+
+          const statusMap = {
+            "Ej kontaktad": 0,
+            "Pågående": 1,
+            "Klar": 2,
+            "Förlorad": 3,
+            "Återkom": 4
+          };
+          const rawStatus = statusMap[c.status] ?? 0;
+
+          await contactService.createContact({
+            firstName,
+            lastName,
+            role: c.role ?? "",
+            company: c.company ?? "",
+            phone: c.phone ? (Array.isArray(c.phone) ? c.phone : [c.phone]) : [],
+            email: c.email ? (Array.isArray(c.email) ? c.email : [c.email]) : [],
+            social: {
+              linkedIn: "",
+              website: ""
+            },
+            status: rawStatus,
+            assignedTo: null,
+            isFavorite: Boolean(c.isFavorite)
+          });
+        } catch (e) {
+          console.warn(`Could not create contact "${c.name}" on backend:`, e);
+        }
+      }
+
+      await contactService.loadContacts({ currentPage: 1, pageSize: 200 });
+    }
   } catch (err) {
     console.warn("Kunde inte ersätta kontakter:", err);
   }
@@ -607,7 +658,7 @@ export function initSeed() {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoByKey(key, taskService) {
+export async function loadDemoByKey(key, taskService, contactService) {
   const loaders = {
     "tech":       loadDemoWorkspace,
     "lia":        loadDemoLIA,
@@ -627,7 +678,7 @@ export async function loadDemoByKey(key, taskService) {
     return;
   }
   try {
-    await fn(taskService);
+    await fn(taskService, contactService);
     // Notify all subscribers (e.g. sidebar) so the team name updates immediately
     notify();
   } catch (err) {
@@ -640,16 +691,16 @@ export async function loadDemoByKey(key, taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoWorkspace(taskService) {
+export async function loadDemoWorkspace(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createTechTasks(), techContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(techPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "The Dev Team";
   saveState(state);
-  await replaceContacts(techContacts);
+  await replaceContacts(techContacts, contactService);
 }
 
 /**
@@ -657,16 +708,16 @@ export async function loadDemoWorkspace(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoLIA(taskService) {
+export async function loadDemoLIA(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createLiaTasks(), liaContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(liaPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "LIA-Gruppen";
   saveState(state);
-  await replaceContacts(liaContacts);
+  await replaceContacts(liaContacts, contactService);
 }
 
 
@@ -675,16 +726,16 @@ export async function loadDemoLIA(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoWedding(taskService) {
+export async function loadDemoWedding(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createWeddingTasks(), weddingContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(weddingPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "Bröllopsteamet";
   saveState(state);
-  await replaceContacts(weddingContacts);
+  await replaceContacts(weddingContacts, contactService);
 }
 
 /**
@@ -692,16 +743,16 @@ export async function loadDemoWedding(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoSales(taskService) {
+export async function loadDemoSales(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createSalesTasks(), salesContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(salesPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "Säljteamet";
   saveState(state);
-  await replaceContacts(salesContacts);
+  await replaceContacts(salesContacts, contactService);
 }
 
 /**
@@ -709,16 +760,16 @@ export async function loadDemoSales(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoFamily(taskService) {
+export async function loadDemoFamily(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createFamilyTasks(), familyContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(familyPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "Familjen";
   saveState(state);
-  await replaceContacts(familyContacts);
+  await replaceContacts(familyContacts, contactService);
 }
 
 /**
@@ -726,16 +777,16 @@ export async function loadDemoFamily(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoEvent(taskService) {
+export async function loadDemoEvent(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createEventTasks(), eventContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(eventPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "Event & Konferens";
   saveState(state);
-  await replaceContacts(eventContacts);
+  await replaceContacts(eventContacts, contactService);
 }
 
 /**
@@ -743,16 +794,16 @@ export async function loadDemoEvent(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoRealEstate(taskService) {
+export async function loadDemoRealEstate(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createRealEstateTasks(), realEstateContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(realEstatePeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "Mäklarteamet";
   saveState(state);
-  await replaceContacts(realEstateContacts);
+  await replaceContacts(realEstateContacts, contactService);
 }
 
 /**
@@ -760,16 +811,16 @@ export async function loadDemoRealEstate(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoICA(taskService) {
+export async function loadDemoICA(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createICATasks(), icaContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(icaPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "ICA-Teamet";
   saveState(state);
-  await replaceContacts(icaContacts);
+  await replaceContacts(icaContacts, contactService);
 }
 
 /**
@@ -777,16 +828,16 @@ export async function loadDemoICA(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoRentFint(taskService) {
+export async function loadDemoRentFint(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createRentFintTasks(), rentFintContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(rentFintPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "Rent & Fint";
   saveState(state);
-  await replaceContacts(rentFintContacts);
+  await replaceContacts(rentFintContacts, contactService);
 }
 
 /**
@@ -794,16 +845,16 @@ export async function loadDemoRentFint(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoGym(taskService) {
+export async function loadDemoGym(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createGymTasks(), gymContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(gymPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "GymTeamet";
   saveState(state);
-  await replaceContacts(gymContacts);
+  await replaceContacts(gymContacts, contactService);
 }
 
 /**
@@ -811,14 +862,14 @@ export async function loadDemoGym(taskService) {
  * @param {Object} taskService - Instance of TaskService
  * @returns {Promise<void>}
  */
-export async function loadDemoBygg(taskService) {
+export async function loadDemoBygg(taskService, contactService) {
   const state = loadState();
   const rawTasks = prepareTasks(createByggTasks(), byggContacts);
-  if (taskService && taskService.importDemoTasks) taskService.importDemoTasks(rawTasks);
+  if (taskService && taskService.importDemoTasks) await taskService.importDemoTasks(rawTasks);
 
   state.people  = withDefaultMembers(byggPeople);
   if (!state.settings) state.settings = {};
   state.settings.teamName = "ByggTeamet";
   saveState(state);
-  await replaceContacts(byggContacts);
+  await replaceContacts(byggContacts, contactService);
 }

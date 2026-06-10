@@ -2,6 +2,7 @@ import { Btn } from "../comps/btn.js";
 import { toggleThemeBtn } from "../comps/themeBtn.js";
 import { loadState, saveState } from "../storage.js";
 import { subscribe } from "../observer.js";
+import { authService } from "../api/dev/Service/AuthService.js";
 
 export const menu = ({navigate, onAddTask}) => {
   const div = document.createElement("div");
@@ -135,6 +136,16 @@ export const menu = ({navigate, onAddTask}) => {
   const footerSection = document.createElement("div");
   footerSection.className = "menu-footer";
   footerSection.style.marginTop = "auto"; 
+
+  const logoutBtn = Btn({
+    text: `<span class="nav-icon material-symbols-rounded">logout</span> <span class="nav-text">Logga ut</span>`,
+    className: "menu-btn logout-link",
+    onClick: () => {
+      authService.logout();
+      window.location.reload();
+    }
+  });
+  footerSection.append(logoutBtn);
 
   div.append(mainButtons, footerSection);
 

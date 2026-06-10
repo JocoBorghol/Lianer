@@ -223,7 +223,7 @@ describe("settingsView", () => {
         demoSelect.value = "ica";
         const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
         await loadBtn.click();
-        expect(loadDemoByKey).toHaveBeenCalledWith("ica", mockTaskService);
+        expect(loadDemoByKey).toHaveBeenCalledWith("ica", mockTaskService, undefined);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 
@@ -233,7 +233,7 @@ describe("settingsView", () => {
         demoSelect.value = "realestate";
         const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
         await loadBtn.click();
-        expect(loadDemoByKey).toHaveBeenCalledWith("realestate", mockTaskService);
+        expect(loadDemoByKey).toHaveBeenCalledWith("realestate", mockTaskService, undefined);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 
@@ -246,7 +246,7 @@ describe("settingsView", () => {
         const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
         await loadBtn.click();
 
-        expect(loadDemoByKey).toHaveBeenCalledWith("tech", mockTaskService);
+        expect(loadDemoByKey).toHaveBeenCalledWith("tech", mockTaskService, undefined);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 
@@ -259,7 +259,7 @@ describe("settingsView", () => {
         const loadBtn = Array.from(container.querySelectorAll(".btn-load-demo")).find(b => b.textContent.includes("Ladda demoläge"));
         await loadBtn.click();
 
-        expect(loadDemoByKey).toHaveBeenCalledWith("lia", mockTaskService);
+        expect(loadDemoByKey).toHaveBeenCalledWith("lia", mockTaskService, undefined);
         expect(rerenderCallback).toHaveBeenCalled();
     });
 

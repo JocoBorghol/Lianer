@@ -45,10 +45,12 @@ window.lianerSmokeTests = Object.freeze({
 });
 
  
-// 1. Kolla om URL-hashen innehåller en Google access token
+// 1. Kolla om användaren redan är inloggad (har sparat JWT-token)
 const urlHash = window.location.hash;
-
-if (urlHash.includes("access_token=")) {
+if (authService.isAuthenticated()) {
+  console.log("Användaren är redan inloggad, startar applikationsskalet...");
+  startApplicationShell();
+} else if (urlHash.includes("access_token=")) {
   // Extrahera token från hashen (allt efter #)
   const params = new URLSearchParams(urlHash.substring(1));
   const accessToken = params.get("access_token");
@@ -158,6 +160,7 @@ function startApplicationShell() {
  
   const appServices = {
     legacyTaskService,
+    taskService: activityTaskServiceAdapter,
     activityStore,
     activityService,
     noteService,
@@ -209,7 +212,7 @@ function startApplicationShell() {
   window.addEventListener("renderApp", () => {
     viewController.rerender();
   });
-  maybeShowWelcomeOverlay(legacyTaskService);
+  maybeShowWelcomeOverlay(activityTaskServiceAdapter, contactService);
 
   window.addEventListener("navigateTo", (e) => {
     const view = e.detail;

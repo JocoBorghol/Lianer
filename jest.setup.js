@@ -42,4 +42,27 @@ global.Html5Qrcode = class {
   start() { return Promise.resolve(); }
   stop() { return Promise.resolve(); }
 };
-
+// Mock __APP_CONFIG__ for tests
+window.__APP_CONFIG__ = {
+  schemaVersion: 1,
+  env: "development",
+  api: {
+    targets: {
+      core: { baseUrl: "http://localhost:5297" },
+      features: { baseUrl: "http://localhost:5266" }
+    },
+    apiVersion: "v1",
+    requestTimeoutMs: 10000,
+    credentials: "omit"
+  },
+  frontend: {
+    baseUrl: "http://localhost:8080"
+  },
+  auth: {
+    scheme: "bearer",
+    tokenStorageKey: "lianer.jwt"
+  },
+  security: {
+    requireHttps: false
+  }
+};

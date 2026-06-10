@@ -11,10 +11,7 @@ export class ViewController {
  
     this.services = services;
 
-    /*
-      TODO: still some mixes with old state data that cant just be removed
-    */
-    this.service = services.legacyTaskService ?? services.taskService ?? null;
+    this.service = services.taskService ?? services.legacyTaskService ?? null;
 
     this.activeView = "dashboard";
     this.params = null;
@@ -81,7 +78,7 @@ export class ViewController {
     }
 
     if (this.activeView === "settings") {
-      renderSettings(this.container, () => this.rerender(), this.service);
+      renderSettings(this.container, () => this.rerender(), this.service, this.services.contactService);
       return;
     }
 

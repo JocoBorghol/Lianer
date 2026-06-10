@@ -93,7 +93,7 @@ export function getWelcomeHTML(isOverlay = true) {
 /**
  * Attaches the shared event listeners for action cards and demo pills.
  */
-export function attachWelcomeEvents(container, taskService, closeAction = null) {
+export function attachWelcomeEvents(container, taskService, contactService, closeAction = null) {
   // Create card → open add task dialog
   container.querySelector(".welcome-card-create")?.addEventListener("click", () => {
     if (closeAction) closeAction();
@@ -124,7 +124,7 @@ export function attachWelcomeEvents(container, taskService, closeAction = null) 
   container.querySelectorAll(".welcome-qs-pill").forEach(pill => {
     pill.addEventListener("click", async () => {
       const key = pill.dataset.demo;
-      await loadDemoByKey(key, taskService);
+      await loadDemoByKey(key, taskService, contactService);
       if (closeAction) closeAction();
       setTimeout(() => window.dispatchEvent(new CustomEvent("navigateTo", { detail: "tasks" })), 350);
     });
@@ -135,7 +135,7 @@ export function attachWelcomeEvents(container, taskService, closeAction = null) 
  * Shows the first-time welcome overlay.
  * Only renders when localStorage flag "lianer_hasSeenWelcome" is absent.
  */
-export function maybeShowWelcomeOverlay(taskService) {
+export function maybeShowWelcomeOverlay(taskService, contactService) {
   if (localStorage.getItem(STORAGE_KEY)) return;
 
   const overlay = document.createElement("div");
@@ -189,5 +189,5 @@ export function maybeShowWelcomeOverlay(taskService) {
   document.addEventListener("keydown", onEsc);
 
   // Pass closeTemp to action cards so it doesn't forcibly perm-hide overlay if they didn't ask it to
-  attachWelcomeEvents(overlay, taskService, closeTemp);
+  attachWelcomeEvents(overlay, taskService, contactService, closeTemp);
 }
