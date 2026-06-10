@@ -50,5 +50,7 @@ jobs:
           az containerapp update \
             --name ${{ env.FRONTEND_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_SERVER }}/lianer-frontend:${{ github.sha }}
+            --image ${{ env.ACR_SERVER }}/lianer-frontend:${{ github.sha }} \
+            --min-replicas 1 \
+            --max-replicas 10
           echo "Frontend uppdaterad -> ${{ github.sha }}"

@@ -26,6 +26,8 @@
         context.location.hostname === "localhost" ||
         context.location.hostname === "127.0.0.1";
 
+    const isDockerCompose = isLocalhost && context.location.port === "3000";
+
     /**
      * @type {object}
      * @description
@@ -65,7 +67,7 @@
                  * @description Base URL for the core backend api.
                  */
                 baseUrl: isLocalhost
-                    ? "http://localhost:5297"
+                    ? (isDockerCompose ? "http://localhost:5000" : "http://localhost:5297")
                     : "https://lianer-core-api.icybush-5ce7e353.italynorth.azurecontainerapps.io"
             },
 
@@ -79,7 +81,7 @@
                  * @description Base URL for the features backend api.
                  */
                 baseUrl: isLocalhost
-                    ? "http://localhost:5266"
+                    ? (isDockerCompose ? "http://localhost:5001" : "http://localhost:5266")
                     : "https://lianer-features-api.icybush-5ce7e353.italynorth.azurecontainerapps.io"
             }
         },
@@ -113,7 +115,7 @@
              * @type {string}
              * @description Base URL for the frontend application.
              */
-            baseUrl: isLocalhost ? "http://localhost:8080"
+            baseUrl: isLocalhost ? `http://localhost:${context.location.port || "8080"}`
                             : "https://lianer-frontend.icybush-5ce7e353.italynorth.azurecontainerapps.io"
         },
 
