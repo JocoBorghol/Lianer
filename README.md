@@ -10,11 +10,11 @@
 
 <p align="center">
   <br />
-  <a href="https://jocoborghol.github.io/Lianer/">
+  <a href="https://lianer-frontend.icybush-5ce7e353.italynorth.azurecontainerapps.io/" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/badge/TRY_IT_LIVE-Visit_Application-brightgreen?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo">
   </a>
   <br />
-  <sub>Don't feel like reading? <strong><a href="https://jocoborghol.github.io/Lianer/">Jump straight into the app!</a></strong></sub>
+  <sub>Don't feel like reading? <strong><a href="https://lianer-frontend.icybush-5ce7e353.italynorth.azurecontainerapps.io/" target="_blank" rel="noopener noreferrer">Jump straight into the app!</a></strong></sub>
 </p>
 
 ---
@@ -178,7 +178,7 @@ We use **GitHub Actions** to automate our testing pipeline. On every `push` and 
 The project is publicly available and deployed via GitHub Pages.
 
 <p align="center">
-  <a href="https://jocoborghol.github.io/Lianer/">
+  <a href="https://lianer-frontend.icybush-5ce7e353.italynorth.azurecontainerapps.io/" target="_blank" rel="noopener noreferrer">
     Visit Live Application
   </a>
 </p>

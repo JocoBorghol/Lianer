@@ -113,7 +113,7 @@
              * @type {string}
              * @description Base URL for the frontend application.
              */
-            baseUrl: isLocalhost ? "http://localhost:3000"
+            baseUrl: isLocalhost ? "http://localhost:8080"
                             : "https://lianer-frontend.icybush-5ce7e353.italynorth.azurecontainerapps.io"
         },
 

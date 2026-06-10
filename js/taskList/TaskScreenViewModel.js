@@ -258,6 +258,96 @@ export class TaskScreenViewModel {
                 notify();
 
                 return deleted;
+            },
+
+            clearTasks: async () => {
+                const activities = this.#activityService.getActivities();
+                for (const activity of activities) {
+                    try {
+                        await this.#activityService.deleteActivity(activity.id);
+                    } catch (error) {
+                        console.error(`Failed to delete activity ${activity.id}:`, error);
+                    }
+                }
+                notify();
+            },
+
+            importDemoTasks: async (tasksArray) => {
+                // 1. Clear existing tasks
+                const activities = this.#activityService.getActivities();
+                for (const activity of activities) {
+                    try {
+                        await this.#activityService.deleteActivity(activity.id);
+                    } catch (error) {
+                        console.error(`Failed to delete activity ${activity.id}:`, error);
+                    }
+                }
+                
+                // 2. Identify all unique assignees from tasksArray and ensure they exist on backend
+                if (Array.isArray(tasksArray)) {
+                    const uniqueAssignees = new Set();
+                    tasksArray.forEach(t => {
+                        const name = t.assigned ?? t.assignedTo?.find(n => n && n !== "Ingen") ?? null;
+                        if (name && name !== "Ingen") {
+                            uniqueAssignees.add(name);
+                        }
+                    });
+
+                    for (const name of uniqueAssignees) {
+                        // Check if user already exists
+                        const existingUser = this.#users.find(u => {
+                            const fullName = u.fullName ?? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+                            return fullName.toLowerCase() === name.toLowerCase();
+                        });
+
+                        if (!existingUser && this.#userService) {
+                            try {
+                                const parts = name.split(" ");
+                                const firstName = parts[0];
+                                const lastName = parts.slice(1).join(" ") || "Demo";
+                                const email = `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/\s+/g, "")}@example.com`;
+                                await this.#userService.createUser({
+                                    firstName,
+                                    lastName,
+                                    email,
+                                    password: "Password123!"
+                                });
+                            } catch (error) {
+                                console.error(`Failed to auto-create user "${name}":`, error);
+                            }
+                        }
+                    }
+
+                    // Reload users from backend to populate cache with new IDs
+                    if (this.#userService?.loadUsers) {
+                        this.#users = await this.#userService.loadUsers();
+                    }
+
+                    // 3. Create tasks on backend
+                    for (const t of tasksArray) {
+                        const request = this.#toCreateActivityRequest(t);
+                        try {
+                            const created = await this.#activityService.createActivity(request);
+                            if (created?.id && t.notes && t.notes.length > 0) {
+                                for (const note of t.notes) {
+                                    const content = String(note.text ?? note.content ?? "").trim();
+                                    if (!content) continue;
+                                    await this.#noteService.createNote(created.id, {
+                                        title: note.title ?? "Notis",
+                                        content
+                                    });
+                                }
+                            }
+                        } catch (error) {
+                            console.error(`Failed to import demo task "${t.title}":`, error);
+                        }
+                    }
+                }
+
+                // 4. Force reload and refresh viewmodel cache
+                this.#isLoaded = false;
+                await this.init();
+                notify();
             }
         };
     }
